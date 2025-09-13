@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>服务器错误 - AutoGen Web笔记</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+        .container {
+            text-align: center;
+            max-width: 500px;
+            padding: 2rem;
+        }
+        h1 {
+            font-size: 4rem;
+            margin: 0;
+            opacity: 0.8;
+        }
+        h2 {
+            font-size: 2rem;
+            margin: 1rem 0;
+        }
+        p {
+            font-size: 1.1rem;
+            margin: 1rem 0;
+            opacity: 0.9;
+        }
+        .btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.3s ease;
+            margin: 0.5rem;
+        }
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        .status {
+            font-size: 0.9rem;
+            opacity: 0.7;
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>5xx</h1>
+        <h2>服务器错误</h2>
+        <p>服务器暂时无法处理您的请求，请稍后重试。</p>
+        <a href="/notes/" class="btn">返回笔记应用</a>
+        <a href="javascript:location.reload()" class="btn">刷新页面</a>
+        <div class="status">
+            如果问题持续存在，请检查后端服务是否正常运行
+        </div>
+    </div>
+</body>
+</html>

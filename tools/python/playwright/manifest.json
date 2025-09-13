@@ -1,0 +1,117 @@
+{
+  "tool_id": "playwright",
+  "name": "Playwright网页自动化",
+  "description": "基于autogen框架的Playwright网页自动化工具，支持网页访问、元素操作、截图等功能",
+  "version": "1.0.0",
+  "author": "AutoGen Desktop App",
+  "category": "web_automation",
+  "tags": ["playwright", "web", "automation", "browser", "screenshot"],
+  "dependencies": [
+    "playwright>=1.40.0",
+    "asyncio"
+  ],
+  "functions": [
+    {
+      "name": "visit_webpage",
+      "description": "访问指定网页并获取基本信息",
+      "parameters": {
+        "url": {
+          "type": "string",
+          "description": "要访问的网页URL",
+          "required": true
+        },
+        "headless": {
+          "type": "boolean",
+          "description": "是否无头模式运行",
+          "default": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "description": "包含访问结果的字典，包括success、title、url、message等字段"
+      }
+    },
+    {
+      "name": "get_webpage_content",
+      "description": "获取网页的文本内容",
+      "parameters": {
+        "url": {
+          "type": "string",
+          "description": "要获取内容的网页URL",
+          "required": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "description": "包含网页内容的字典，包括success、title、url、content等字段"
+      }
+    },
+    {
+      "name": "take_webpage_screenshot",
+      "description": "访问网页并截取截图",
+      "parameters": {
+        "url": {
+          "type": "string",
+          "description": "要截图的网页URL",
+          "required": true
+        },
+        "filename": {
+          "type": "string",
+          "description": "截图文件名，如果为空则自动生成",
+          "required": false
+        }
+      },
+      "returns": {
+        "type": "object",
+        "description": "包含截图结果的字典，包括success、path、message等字段"
+      }
+    },
+    {
+      "name": "create_web_automation",
+      "description": "创建网页自动化实例，用于复杂的网页操作",
+      "parameters": {
+        "headless": {
+          "type": "boolean",
+          "description": "是否无头模式运行",
+          "default": true
+        },
+        "viewport_width": {
+          "type": "integer",
+          "description": "视口宽度",
+          "default": 1440
+        },
+        "viewport_height": {
+          "type": "integer",
+          "description": "视口高度",
+          "default": 900
+        }
+      },
+      "returns": {
+        "type": "object",
+        "description": "WebAutomation实例"
+      }
+    }
+  ],
+  "installation": {
+    "pip_packages": [
+      "playwright>=1.40.0"
+    ],
+    "post_install": [
+      "playwright install chromium"
+    ]
+  },
+  "usage_examples": [
+    {
+      "title": "访问网页",
+      "code": "result = visit_webpage('https://www.example.com')\nprint(result['title'])"
+    },
+    {
+      "title": "获取网页内容",
+      "code": "content = get_webpage_content('https://www.example.com')\nprint(content['content'])"
+    },
+    {
+      "title": "网页截图",
+      "code": "screenshot = take_webpage_screenshot('https://www.example.com', 'example.png')\nprint(screenshot['path'])"
+    }
+  ]
+}

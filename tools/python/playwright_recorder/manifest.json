@@ -1,0 +1,87 @@
+{
+  "name": "playwright_recorder",
+  "display_name": "Playwright录制器",
+  "description": "桌面版网页操作录制器，支持录制用户操作并转换为中文指令",
+  "version": "1.0.0",
+  "type": "python",
+  "category": "automation",
+  "author": "Desktop App Team",
+  "dependencies": [
+    "playwright>=1.40.0",
+    "asyncio",
+    "json",
+    "dataclasses"
+  ],
+  "functions": [
+    {
+      "name": "record_web_actions",
+      "display_name": "开始录制网页操作",
+      "description": "启动浏览器开始录制用户的网页操作",
+      "parameters": {
+        "start_url": {
+          "type": "string",
+          "description": "起始网页URL",
+          "default": "https://www.baidu.com"
+        },
+        "headless": {
+          "type": "boolean", 
+          "description": "是否无头模式运行",
+          "default": false
+        }
+      }
+    },
+    {
+      "name": "stop_web_recording",
+      "display_name": "停止录制",
+      "description": "停止录制并保存操作记录",
+      "parameters": {}
+    },
+    {
+      "name": "convert_recording_to_chinese",
+      "display_name": "转换为中文指令",
+      "description": "将录制的操作转换为中文指令",
+      "parameters": {
+        "recording_file": {
+          "type": "string",
+          "description": "录制文件路径"
+        }
+      }
+    },
+    {
+      "name": "list_all_recordings",
+      "display_name": "列出所有录制",
+      "description": "获取所有录制文件列表",
+      "parameters": {}
+    },
+    {
+      "name": "replay_web_recording",
+      "display_name": "重放录制操作",
+      "description": "重放之前录制的网页操作",
+      "parameters": {
+        "recording_file": {
+          "type": "string",
+          "description": "录制文件路径"
+        },
+        "model_name": {
+          "type": "string",
+          "description": "使用的AI模型",
+          "default": "qwen-turbo-latest"
+        }
+      }
+    }
+  ],
+  "features": [
+    "网页操作录制",
+    "操作回放",
+    "中文指令转换",
+    "Agent集成",
+    "可视化操作"
+  ],
+  "tags": [
+    "playwright",
+    "录制",
+    "自动化",
+    "网页操作",
+    "中文指令"
+  ]
+}

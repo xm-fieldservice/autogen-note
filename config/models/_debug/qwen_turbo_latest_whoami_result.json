@@ -1,0 +1,31 @@
+{
+  "status_code": 200,
+  "ok": true,
+  "data": {
+    "choices": [
+      {
+        "message": {
+          "role": "assistant",
+          "content": "我是通义千问，由通义实验室研发的超大规模语言模型。我可以帮助你回答问题、创作文字、进行逻辑推理、编程等任务。有什么我可以帮你的吗？"
+        },
+        "finish_reason": "stop",
+        "index": 0,
+        "logprobs": null
+      }
+    ],
+    "object": "chat.completion",
+    "usage": {
+      "prompt_tokens": 21,
+      "completion_tokens": 40,
+      "total_tokens": 61
+    },
+    "created": 1754921052,
+    "system_fingerprint": null,
+    "model": "qwen-turbo-latest",
+    "id": "chatcmpl-067e701e-d3c1-95e5-b50f-b6aec8b19cf5"
+  },
+  "text": "我是通义千问，由通义实验室研发的超大规模语言模型。我可以帮助你回答问题、创作文字、进行逻辑推理、编程等任务。有什么我可以帮你的吗？",
+  "started_at": "2025-08-11T14:04:11.027687+00:00",
+  "ended_at": "2025-08-11T14:04:12.156943+00:00",
+  "duration_ms": 1128
+}

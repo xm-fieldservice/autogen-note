@@ -1,0 +1,37 @@
+{
+  "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+  "component_type": "model",
+  "config": {
+    "model": "kimi-k2-0711-preview",
+    "api_key": "${MOONSHOT_API_KEY}",
+    "base_url": "https://api.moonshot.cn/v1",
+    "organization": null,
+    "timeout": 30.0,
+    "max_retries": 3,
+    "frequency_penalty": 0.0,
+    "logit_bias": null,
+    "max_tokens": 2048,
+    "n": 1,
+    "presence_penalty": 0.0,
+    "response_format": null,
+    "seed": 0,
+    "stop": [],
+    "temperature": 0.7,
+    "top_p": 0.9,
+    "user": null,
+    "stream_options": null,
+    "parallel_tool_calls": null,
+    "model_capabilities": null,
+    "add_name_prefixes": false,
+    "include_name_in_message": true,
+    "default_headers": {},
+    "model_info": {
+      "vision": false,
+      "function_calling": true,
+      "json_output": true,
+      "family": "unknown",
+      "structured_output": false,
+      "multiple_system_messages": false
+    }
+  }
+}

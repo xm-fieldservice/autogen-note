@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "vectorstores_registry",
+  "type": "object",
+  "properties": {
+    "schema": {"type": "integer"},
+    "vectorstores": {"type": "array"}
+  },
+  "required": ["schema", "vectorstores"]
+}

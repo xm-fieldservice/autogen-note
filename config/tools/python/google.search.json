@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "id": "google.search",
+  "type": "python",
+  "version": "0.1.0",
+  "title": "Google Custom Search",
+  "description": "使用 Google Programmable Search Engine 的 JSON API 进行网页搜索。需要 GOOGLE_API_KEY 与 GOOGLE_CSE_CX。",
+  "doc_url": "https://developers.google.com/custom-search/v1/overview",
+  "source": "local",
+  "last_verified": "",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "query": {"type": "string", "description": "查询关键词"},
+      "num": {"type": "integer", "minimum": 1, "maximum": 10, "default": 5},
+      "site": {"type": "string", "nullable": true, "description": "限制站点，如 example.com"},
+      "safe": {"type": "string", "enum": ["active", "off", "high", "medium"], "nullable": true},
+      "dateRestrict": {"type": "string", "nullable": true, "description": "时间范围，如 d7/m1/y1"}
+    },
+    "required": ["query"]
+  },
+  "runtime": {
+    "module": "tools.python.google.search.impl",
+    "callable": "run"
+  },
+  "sandbox": {
+    "working_dir": ".",
+    "env_whitelist": ["GOOGLE_API_KEY", "GOOGLE_CSE_CX"],
+    "allow_network": true,
+    "timeout": 60
+  }
+}

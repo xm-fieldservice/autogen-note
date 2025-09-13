@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "vectorstore",
+  "type": "object",
+  "properties": {
+    "schema": {"type": "integer"},
+    "id": {"type": "string"},
+    "provider": {"type": "string"}
+  },
+  "required": ["schema", "id", "provider"]
+}

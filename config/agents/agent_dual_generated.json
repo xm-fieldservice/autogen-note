@@ -1,0 +1,93 @@
+{
+  "provider": "autogen_agentchat.agents.AssistantAgent",
+  "component_type": "agent",
+  "version": 1,
+  "component_version": 1,
+  "description": "双库架构知识助手",
+  "label": "DualLibraryAgent",
+  "config": {
+    "name": "dual_library_assistant",
+    "description": "双库架构知识助手",
+    "model_client": {
+      "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+      "component_type": "model",
+      "version": 1,
+      "component_version": 1,
+      "config": {
+        "model": "deepseek-chat",
+        "api_key": "${DEEPSEEK_API_KEY}",
+        "temperature": 0.7,
+        "max_tokens": 2048,
+        "base_url": "https://api.deepseek.com/v1"
+      }
+    },
+    "memory": [
+      {
+        "provider": "autogen_ext.memory.chromadb.ChromaDBVectorMemory",
+        "component_type": "memory",
+        "config": {
+          "client_type": "persistent",
+          "collection_name": "knowledge_base",
+          "persistence_path": "data/chroma/kb",
+          "distance_metric": "cosine",
+          "k": 3,
+          "score_threshold": 0.4,
+          "allow_reset": false,
+          "tenant": "default_tenant",
+          "database": "default_database",
+          "embedding_function_config": {
+            "function_type": "sentence_transformer",
+            "model_name": "all-MiniLM-L6-v2"
+          }
+        }
+      },
+      {
+        "provider": "autogen_ext.memory.chromadb.ChromaDBVectorMemory",
+        "component_type": "memory",
+        "config": {
+          "client_type": "persistent",
+          "collection_name": "conversation_history",
+          "persistence_path": "data/chroma/chat",
+          "distance_metric": "cosine",
+          "k": 2,
+          "score_threshold": 0.35,
+          "allow_reset": false,
+          "tenant": "default_tenant",
+          "database": "default_database",
+          "embedding_function_config": {
+            "function_type": "sentence_transformer",
+            "model_name": "all-MiniLM-L6-v2"
+          }
+        }
+      }
+    ],
+    "system_message": "你是一个具备双库查询能力的知识助手。你可以从知识库和对话历史中检索相关信息来回答问题。 优先使用向量检索获取相关资料，若无可用证据再直接根据上下文回答。",
+    "reflect_on_tool_use": false,
+    "tool_call_summary_format": "{result}",
+    "max_tool_iterations": 1,
+    "workbench": [
+      {
+        "provider": "autogen_core.tools.StaticWorkbench",
+        "component_type": "workbench",
+        "version": 1,
+        "component_version": 1,
+        "config": {
+          "tools": []
+        }
+      }
+    ],
+    "model_context": {
+      "provider": "autogen_core.model_context.UnboundedChatCompletionContext",
+      "component_type": "chat_completion_context",
+      "version": 1,
+      "component_version": 1,
+      "config": {}
+    },
+    "metadata": {
+      "architecture_type": "dual_library",
+      "enable_graphrag": false,
+      "created_at": "2025-08-29T07:11:21.445602",
+      "version": "1.0.0"
+    }
+  }
+}

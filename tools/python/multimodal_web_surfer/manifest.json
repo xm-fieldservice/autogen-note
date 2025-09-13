@@ -1,0 +1,148 @@
+{
+  "tool_id": "multimodal_web_surfer",
+  "name": "MultimodalWebSurfer多模态网页浏览",
+  "description": "基于autogen框架的多模态网页浏览Agent，支持智能网页搜索、页面访问、内容分析和交互操作",
+  "version": "1.0.0",
+  "author": "AutoGen Desktop App",
+  "category": "web_automation",
+  "tags": ["multimodal", "web_surfer", "autogen", "browser", "ai_agent"],
+  "dependencies": [
+    "autogen-ext[web-surfer]>=0.7.1",
+    "playwright>=1.40.0",
+    "autogen-agentchat>=0.7.1",
+    "autogen-core>=0.7.1"
+  ],
+  "functions": [
+    {
+      "name": "web_search",
+      "description": "使用AI Agent执行智能网页搜索",
+      "parameters": {
+        "query": {
+          "type": "string",
+          "description": "搜索查询内容",
+          "required": true
+        },
+        "model_client": {
+          "type": "object",
+          "description": "模型客户端实例",
+          "required": true
+        },
+        "headless": {
+          "type": "boolean",
+          "description": "是否无头模式运行",
+          "default": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "description": "包含搜索结果的字典，包括success、query、response、message等字段"
+      }
+    },
+    {
+      "name": "visit_url",
+      "description": "使用AI Agent访问指定网页并分析内容",
+      "parameters": {
+        "url": {
+          "type": "string",
+          "description": "要访问的网页URL",
+          "required": true
+        },
+        "model_client": {
+          "type": "object",
+          "description": "模型客户端实例",
+          "required": true
+        },
+        "headless": {
+          "type": "boolean",
+          "description": "是否无头模式运行",
+          "default": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "description": "包含访问结果的字典，包括success、url、response、message等字段"
+      }
+    },
+    {
+      "name": "get_page_summary",
+      "description": "获取当前页面的AI总结",
+      "parameters": {
+        "model_client": {
+          "type": "object",
+          "description": "模型客户端实例",
+          "required": true
+        },
+        "headless": {
+          "type": "boolean",
+          "description": "是否无头模式运行",
+          "default": true
+        }
+      },
+      "returns": {
+        "type": "object",
+        "description": "包含页面总结的字典，包括success、summary、message等字段"
+      }
+    },
+    {
+      "name": "create_web_surfer",
+      "description": "创建MultimodalWebSurfer实例用于复杂操作",
+      "parameters": {
+        "model_client": {
+          "type": "object",
+          "description": "模型客户端实例",
+          "required": true
+        },
+        "headless": {
+          "type": "boolean",
+          "description": "是否无头模式运行",
+          "default": true
+        },
+        "animate_actions": {
+          "type": "boolean",
+          "description": "是否动画显示操作",
+          "default": false
+        },
+        "to_save_screenshots": {
+          "type": "boolean",
+          "description": "是否保存截图",
+          "default": false
+        }
+      },
+      "returns": {
+        "type": "object",
+        "description": "MultimodalWebSurferTool实例"
+      }
+    }
+  ],
+  "installation": {
+    "pip_packages": [
+      "autogen-ext[web-surfer]>=0.7.1",
+      "playwright>=1.40.0"
+    ],
+    "post_install": [
+      "playwright install chromium"
+    ]
+  },
+  "features": [
+    "智能网页搜索和导航",
+    "多模态内容理解（文本+图像）",
+    "自动页面交互（点击、填写表单等）",
+    "页面内容总结和问答",
+    "截图和视觉分析",
+    "支持复杂网页操作流程"
+  ],
+  "usage_examples": [
+    {
+      "title": "智能网页搜索",
+      "code": "result = web_search('autogen框架最新文档', model_client)\nprint(result['response'])"
+    },
+    {
+      "title": "访问并分析网页",
+      "code": "result = visit_url('https://github.com/microsoft/autogen', model_client)\nprint(result['response'])"
+    },
+    {
+      "title": "创建持续会话",
+      "code": "surfer = create_web_surfer(model_client)\nresult = await surfer.search_web('Python教程')\nawait surfer.close()"
+    }
+  ]
+}

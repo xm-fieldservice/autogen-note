@@ -1,0 +1,182 @@
+{
+  "provider": "autogen_agentchat.teams.RoundRobinGroupChat",
+  "component_type": "team",
+  "version": 1,
+  "component_version": 1,
+  "description": "智能查询协作团队 - 多Agent分工协作的高级查询方案",
+  "label": "smart-query-collaboration-team",
+  "config": {
+    "name": "smart-query-collaboration-team",
+    "description": "多Agent协作：路由判断 + 网络查询 + 内容整理，提供专业化分工的智能查询服务",
+    "participants": [
+      {
+        "provider": "autogen_agentchat.agents.AssistantAgent",
+        "component_type": "agent",
+        "version": 1,
+        "component_version": 1,
+        "config": {
+          "name": "查询路由器",
+          "description": "智能查询意图分析和任务分发",
+          "system_message": "你是查询路由分析专家，负责分析用户查询意图并制定查询策略。\n\n【核心职责】\n1. 分析查询复杂度和类型\n2. 判断是否需要网络搜索\n3. 确定查询策略（基础/高级）\n4. 向网络查询专家发出明确指令\n\n【输出格式】\n```json\n{\n  \"analysis\": \"查询分析结果\",\n  \"strategy\": \"basic|advanced\",\n  \"search_needed\": true|false,\n  \"instructions\": \"给网络查询专家的具体指令\"\n}\n```\n\n【判断标准】\n- 时效性查询（最新、实时、今天）→ advanced\n- 技术复杂查询（API、配置、工具）→ advanced  \n- 简单概念查询（定义、历史）→ basic\n- 本地知识足够 → search_needed: false",
+          "model_client": {
+            "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+            "component_type": "model",
+            "version": 1,
+            "component_version": 1,
+            "config": {
+              "model": "qwen-turbo-latest",
+              "api_key_env": "DASHSCOPE_API_KEY",
+              "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+              "model_info": {
+                "api_type": "openai",
+                "family": "qwen",
+                "vision": false,
+                "function_calling": true,
+                "json_output": true
+              },
+              "parameters": {
+                "temperature": 0.3,
+                "max_tokens": 1024,
+                "timeout": 30
+              }
+            }
+          },
+          "memory": [
+            {
+              "type": "chroma_vector_memory",
+              "provider": "autogen_ext.memory.chromadb.ChromaDBVectorMemory",
+              "component_type": "memory",
+              "config": {
+                "client_type": "persistent",
+                "persistence_path": "./data/autogen_official_memory/vector_demo/",
+                "collection_name": "vector_demo_assistant",
+                "distance_metric": "cosine",
+                "k": 5,
+                "score_threshold": 0.2,
+                "embedding_function_config": {
+                  "function_type": "sentence_transformer",
+                  "model_name": "all-MiniLM-L6-v2"
+                },
+                "write_enabled": false
+              }
+            }
+          ]
+        }
+      },
+      {
+        "provider": "autogen_agentchat.agents.AssistantAgent",
+        "component_type": "agent",
+        "version": 1,
+        "component_version": 1,
+        "config": {
+          "name": "网络查询专家",
+          "description": "专业网络内容抓取和初步整理",
+          "system_message": "你是网络查询专家，负责执行智能网络搜索和内容抓取。\n\n【核心能力】\n1. 使用enhanced_web_query工具进行混合策略抓取\n2. 根据路由器指令选择合适的查询参数\n3. 对抓取结果进行初步质量评估\n4. 向内容整理专家提供原始材料\n\n【工作流程】\n1. 接收路由器的查询指令\n2. 执行网络搜索和内容抓取\n3. 评估内容质量和完整性\n4. 输出结构化的原始材料\n\n【输出格式】\n## 🔍 搜索执行报告\n### 📊 执行统计\n- 查询策略：[basic/advanced]\n- 搜索结果：X条\n- 成功抓取：X条\n- 抓取方式：requests(X) + playwright(X)\n\n### 📄 原始材料\n[为内容整理专家提供的结构化原始内容]\n\n严禁直接输出最终答案，只提供原始材料和执行报告。",
+          "model_client": {
+            "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+            "component_type": "model",
+            "version": 1,
+            "component_version": 1,
+            "config": {
+              "model": "qwen-turbo-latest",
+              "api_key_env": "DASHSCOPE_API_KEY",
+              "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+              "model_info": {
+                "api_type": "openai",
+                "family": "qwen",
+                "vision": false,
+                "function_calling": true,
+                "json_output": false
+              },
+              "parameters": {
+                "temperature": 0.5,
+                "max_tokens": 3072,
+                "timeout": 60
+              }
+            }
+          },
+          "tools": [
+            {
+              "provider": "tools.python.smart_web_query.enhanced_adapter",
+              "config": {}
+            }
+          ],
+          "memory": []
+        }
+      },
+      {
+        "provider": "autogen_agentchat.agents.AssistantAgent",
+        "component_type": "agent",
+        "version": 1,
+        "component_version": 1,
+        "config": {
+          "name": "内容整理专家",
+          "description": "专业内容分析和结构化答案生成",
+          "system_message": "你是内容整理专家，负责将网络查询专家提供的原始材料整理成高质量的结构化答案。\n\n【核心职责】\n1. 分析和整合多源信息\n2. 生成结构化的最终答案\n3. 确保信息准确性和权威性\n4. 将答案写入向量库供后续查询\n\n【答案格式】严格按照以下结构：\n## 📋 查询结果\n\n### 🎯 核心答案\n[基于多源网页内容的综合答案]\n\n### 📝 详细说明\n[补充信息、背景知识、技术细节]\n\n### 🔗 权威来源\n1. **[网站名称]** - [核心信息摘要]\n   - 链接：[URL]\n   - 抓取方式：[requests/playwright]\n   - 可信度：⭐⭐⭐⭐⭐\n   - 要点：[关键信息提取]\n\n### 💡 补充信息\n[相关建议、注意事项、延伸阅读]\n\n### 📊 查询统计\n- 团队协作：路由分析 → 网络抓取 → 内容整理\n- 信息源数量：X个权威来源\n- 抓取成功率：X%\n- 内容质量：[高/中/低]\n\n【质量标准】\n- 信息准确性优先\n- 多源交叉验证\n- 结构清晰易读\n- 来源可追溯",
+          "model_client": {
+            "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+            "component_type": "model",
+            "version": 1,
+            "component_version": 1,
+            "config": {
+              "model": "qwen-turbo-latest",
+              "api_key_env": "DASHSCOPE_API_KEY",
+              "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+              "model_info": {
+                "api_type": "openai",
+                "family": "qwen",
+                "vision": false,
+                "function_calling": true,
+                "json_output": false
+              },
+              "parameters": {
+                "temperature": 0.7,
+                "max_tokens": 4096,
+                "timeout": 45
+              }
+            }
+          },
+          "memory_write_policy": "qa_both",
+          "memory": [
+            {
+              "type": "chroma_vector_memory",
+              "provider": "autogen_ext.memory.chromadb.ChromaDBVectorMemory",
+              "component_type": "memory",
+              "config": {
+                "client_type": "persistent",
+                "persistence_path": "./data/autogen_official_memory/vector_demo/",
+                "collection_name": "vector_demo_assistant",
+                "distance_metric": "cosine",
+                "k": 8,
+                "score_threshold": 0.1,
+                "embedding_function_config": {
+                  "function_type": "sentence_transformer",
+                  "model_name": "all-MiniLM-L6-v2"
+                },
+                "write_enabled": true
+              }
+            }
+          ],
+          "tools": [
+            {
+              "type": "python",
+              "name": "graphrag_global_search",
+              "module": "autogen_ext.tools.graphrag._global_search",
+              "class": "GlobalSearchTool",
+              "init": {
+                "method": "from_settings",
+                "kwargs": {
+                  "root_dir": "./graphrag",
+                  "config_filepath": "./graphrag/settings.yaml"
+                }
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "termination_condition": null,
+    "max_turns": 6,
+    "emit_team_events": true
+  }
+}

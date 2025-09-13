@@ -1,0 +1,269 @@
+{
+  "provider": "autogen_agentchat.teams.RoundRobinGroupChat",
+  "component_type": "team",
+  "version": 1,
+  "component_version": 1,
+  "description": "结构表管理团队",
+  "label": "TableManagerTeam",
+  "config": {
+    "name": "table_manager_team",
+    "description": "结构表管理团队 - 处理结构化数据表的创建、查询和分析",
+    "participants": [
+      {
+        "provider": "autogen_agentchat.agents.AssistantAgent",
+        "component_type": "agent",
+        "version": 1,
+        "component_version": 1,
+        "config": {
+          "name": "表格专家",
+          "description": "负责表格数据的创建、读取、更新和删除操作的专家",
+          "system_message": "你是表格数据操作专家，负责执行数据的创建、读取、更新和删除操作。你精通数据表的管理，能够帮助用户操作各种结构化数据。\n\n你的职责包括：\n1. 执行表格的增删改查操作\n2. 确保数据操作的正确性和完整性\n3. 处理数据索引和关联查询\n4. 实现复杂的数据过滤和聚合\n\n当需要执行表格操作时，请使用提供的table_manager工具，确保操作前进行数据验证。",
+          "model_client": {
+            "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+            "component_type": "model",
+            "version": 1,
+            "component_version": 1,
+            "config": {
+              "model": "deepseek-chat",
+              "api_key": "${DEEPSEEK_API_KEY}",
+              "temperature": 0.3,
+              "max_tokens": 2048,
+              "base_url": "https://api.deepseek.com/v1"
+            }
+          },
+          "memory": [
+            {
+              "provider": "autogen_ext.memory.chromadb.ChromaDBVectorMemory",
+              "component_type": "memory",
+              "config": {
+                "client_type": "persistent",
+                "collection_name": "table_expert_memory",
+                "persistence_path": "data/chroma/team",
+                "distance_metric": "cosine",
+                "k": 3,
+                "score_threshold": 0.4,
+                "allow_reset": false,
+                "tenant": "default_tenant",
+                "database": "default_database",
+                "embedding_function_config": {
+                  "function_type": "sentence_transformer",
+                  "model_name": "all-MiniLM-L6-v2"
+                }
+              }
+            }
+          ],
+          "workbench": [
+            {
+              "provider": "autogen_core.tools.StaticWorkbench",
+              "component_type": "workbench",
+              "version": 1,
+              "component_version": 1,
+              "config": {
+                "tools": [
+                  {
+                    "provider": "tools.python.table_manager.TableToolProvider",
+                    "component_type": "tool_provider",
+                    "config": {
+                      "schema_dir": "data/schemas",
+                      "data_dir": "data/tables"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "reflect_on_tool_use": true,
+          "tool_call_summary_format": "{result}",
+          "max_tool_iterations": 2
+        }
+      },
+      {
+        "provider": "autogen_agentchat.agents.AssistantAgent",
+        "component_type": "agent",
+        "version": 1,
+        "component_version": 1,
+        "config": {
+          "name": "意图专家",
+          "description": "负责分析用户请求并确定操作类型、目标表和数据字段",
+          "system_message": "你是意图识别专家，负责分析用户请求并确定操作类型、目标表和数据字段。你擅长从用户的自然语言描述中提取结构化信息。\n\n你的职责包括：\n1. 识别用户请求中的操作意图（创建、查询、更新、删除等）\n2. 确定请求涉及的表名和字段\n3. 从自然语言中提取结构化数据\n4. 将复杂请求分解为简单步骤\n\n当接收到用户请求时，请分析意图并将其转换为明确的操作指令，以便表格专家执行。",
+          "model_client": {
+            "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+            "component_type": "model",
+            "version": 1,
+            "component_version": 1,
+            "config": {
+              "model": "deepseek-chat",
+              "api_key": "${DEEPSEEK_API_KEY}",
+              "temperature": 0.2,
+              "max_tokens": 2048,
+              "base_url": "https://api.deepseek.com/v1"
+            }
+          },
+          "workbench": [
+            {
+              "provider": "autogen_core.tools.StaticWorkbench",
+              "component_type": "workbench",
+              "version": 1,
+              "component_version": 1,
+              "config": {
+                "tools": [
+                  {
+                    "provider": "tools.python.table_manager.IntentProcessorTool",
+                    "component_type": "tool_provider",
+                    "config": {}
+                  }
+                ]
+              }
+            }
+          ],
+          "reflect_on_tool_use": false,
+          "max_tool_iterations": 1
+        }
+      },
+      {
+        "provider": "autogen_agentchat.agents.AssistantAgent",
+        "component_type": "agent",
+        "version": 1,
+        "component_version": 1,
+        "config": {
+          "name": "验证专家",
+          "description": "负责确保输入数据符合表结构定义和业务规则",
+          "system_message": "你是数据验证专家，负责确保输入数据符合表结构定义和业务规则。你精通数据质量控制和约束检查。\n\n你的职责包括：\n1. 验证数据是否符合表结构定义\n2. 检查数据是否满足业务规则和约束\n3. 发现并提示数据中的错误和异常\n4. 提供数据修正建议\n\n当表格专家需要进行数据操作前，请先审核数据，确保其符合要求。对于不符合要求的数据，请给出具体问题和修正建议。",
+          "model_client": {
+            "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+            "component_type": "model",
+            "version": 1,
+            "component_version": 1,
+            "config": {
+              "model": "deepseek-chat",
+              "api_key": "${DEEPSEEK_API_KEY}",
+              "temperature": 0.1,
+              "max_tokens": 2048,
+              "base_url": "https://api.deepseek.com/v1"
+            }
+          },
+          "workbench": [
+            {
+              "provider": "autogen_core.tools.StaticWorkbench",
+              "component_type": "workbench",
+              "version": 1,
+              "component_version": 1,
+              "config": {
+                "tools": [
+                  {
+                    "provider": "tools.python.table_manager.SchemaValidator",
+                    "component_type": "tool_provider",
+                    "config": {
+                      "schema_dir": "data/schemas"
+                    }
+                  }
+                ]
+              }
+            }
+          ],
+          "reflect_on_tool_use": true,
+          "max_tool_iterations": 2
+        }
+      },
+      {
+        "provider": "autogen_agentchat.agents.AssistantAgent",
+        "component_type": "agent",
+        "version": 1,
+        "component_version": 1,
+        "config": {
+          "name": "分析专家",
+          "description": "负责数据分析和可视化",
+          "system_message": "你是数据分析和可视化专家，负责从表格数据中提取洞见并生成报表。你精通数据分析技术和可视化方法。\n\n你的职责包括：\n1. 对表格数据进行统计分析\n2. 识别数据趋势和模式\n3. 生成数据摘要和报告\n4. 提供可视化建议\n\n当需要分析数据或生成报告时，请使用提供的分析工具，并以清晰易懂的方式呈现结果。",
+          "model_client": {
+            "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+            "component_type": "model",
+            "version": 1,
+            "component_version": 1,
+            "config": {
+              "model": "deepseek-chat",
+              "api_key": "${DEEPSEEK_API_KEY}",
+              "temperature": 0.4,
+              "max_tokens": 2048,
+              "base_url": "https://api.deepseek.com/v1"
+            }
+          },
+          "workbench": [
+            {
+              "provider": "autogen_core.tools.StaticWorkbench",
+              "component_type": "workbench",
+              "version": 1,
+              "component_version": 1,
+              "config": {
+                "tools": [
+                  {
+                    "provider": "tools.python.table_manager.TableAnalytics",
+                    "component_type": "tool_provider",
+                    "config": {}
+                  }
+                ]
+              }
+            }
+          ],
+          "reflect_on_tool_use": true,
+          "max_tool_iterations": 2
+        }
+      },
+      {
+        "provider": "autogen_agentchat.agents.UserProxyAgent",
+        "component_type": "agent",
+        "version": 1,
+        "component_version": 1,
+        "config": {
+          "name": "用户代理",
+          "description": "与用户交流，理解需求并展示结果的代理",
+          "system_message": "你负责与用户交流，理解需求并展示结果。你是用户和专家团队之间的桥梁。\n\n你的职责包括：\n1. 接收并理解用户请求\n2. 将请求转发给合适的专家\n3. 整合专家意见并呈现给用户\n4. 确保用户获得满意的回答\n\n请以清晰、友好的方式与用户交流，避免使用专业术语，并确保用户理解所有操作和结果。",
+          "human_input_mode": "NEVER",
+          "code_execution_config": false
+        }
+      }
+    ],
+    "max_turns": 15,
+    "emit_team_events": false,
+    "memory": [
+      {
+        "provider": "autogen_ext.memory.chromadb.ChromaDBVectorMemory",
+        "component_type": "memory",
+        "config": {
+          "client_type": "persistent",
+          "collection_name": "team_memory",
+          "persistence_path": "data/chroma/team",
+          "distance_metric": "cosine",
+          "k": 5,
+          "score_threshold": 0.4,
+          "allow_reset": false,
+          "tenant": "default_tenant",
+          "database": "default_database",
+          "embedding_function_config": {
+            "function_type": "sentence_transformer",
+            "model_name": "all-MiniLM-L6-v2"
+          }
+        }
+      }
+    ],
+    "model_context": {
+      "provider": "autogen_core.model_context.UnboundedChatCompletionContext",
+      "component_type": "chat_completion_context",
+      "version": 1,
+      "component_version": 1,
+      "config": {}
+    }
+  },
+  "metadata": {
+    "architecture_type": "table_management",
+    "created_at": "2025-08-29T08:31:30",
+    "version": "1.0.0",
+    "admin_name": "用户代理",
+    "speaker_selection_method": "round_robin",
+    "selector_config": {
+      "thinking_mode": true,
+      "thinking_prompt": "分析当前对话和问题，确定哪位专家最适合处理这个请求。考虑问题的类型、复杂度和所需专业知识。",
+      "thinking_max_tokens": 500
+    },
+    "max_round": 15
+  }
+}

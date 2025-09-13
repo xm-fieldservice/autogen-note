@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PC 笔记页面（三库集成）- 单页版</title>
+  <link rel="icon" href="data:," />
+  <style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'PingFang SC', 'Microsoft Yahei', sans-serif; color: #1f2937; }
+    .app { display: grid; grid-template-columns: 300px 1fr 320px; grid-template-rows: 100vh; }
+    .sidebar { border-right: 1px solid #e5e7eb; overflow: hidden; display: flex; flex-direction: column; }
+    .tabs { display: flex; border-bottom: 1px solid #e5e7eb; }
+    .tab { flex: 1; padding: 10px; border: 0; background: #f9fafb; cursor: pointer; }
+    .tab.active { background: #fff; font-weight: 600; }
+    .tab-content { padding: 10px; overflow: auto; height: calc(100vh - 42px); }
+    .hidden { display: none; }
+
+    .topic-list { list-style: none; padding: 0; margin: 0; }
+    .topic-item { padding: 12px; border: 1px solid #e5e7eb; border-radius: 8px; margin-bottom: 10px; display: flex; flex-direction: column; gap: 10px; cursor: pointer; }
+    .topic-title { width: 100%; border: none; background: transparent; font-size: 18px; font-weight: 600; cursor: text; }
+    .topic-actions { display: flex; gap: 10px; }
+    .icon-btn { border: none; background: transparent; cursor: pointer; width: 28px; height: 28px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center; }
+    .icon-btn.fav { color: #f59e0b; background: #fffbeb; }
+    .icon-btn.export { color: #10b981; background: #ecfdf5; }
+    .icon-btn.archive { color: #3b82f6; background: #eff6ff; }
+    .icon-btn.delete { color: #ef4444; background: #fef2f2; }
+    .topic-item.active { border-color: #3b82f6; box-shadow: 0 0 0 2px rgba(59,130,246,0.1); }
+    .btn { background: #2563eb; color: #fff; border: 0; padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+    .btn.add { background: #10b981; width: 100%; margin-top: 8px; }
+    .btn.sm { padding: 4px 8px; font-size: 12px; }
+    .btn.secondary { background: #6b7280; }
+
+    .tags-panel { display: flex; flex-direction: column; gap: 8px; }
+    .tags-header { display: flex; align-items: center; justify-content: space-between; }
+    .tag-actions { display: flex; gap: 6px; }
+    .tag-list { list-style: none; padding: 0; margin: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag-item { border: 1px solid #e5e7eb; border-radius: 16px; padding: 4px 10px; display: flex; gap: 6px; align-items: center; }
+
+    .main { border-right: 1px solid #e5e7eb; display: flex; flex-direction: column; }
+    .mode-bar { display: flex; align-items: center; justify-content: space-between; padding: 8px; border-bottom: 1px solid #e5e7eb; }
+    .modes { display: flex; align-items: center; gap: 8px; }
+    .mode-btn { border: 0; padding: 6px 10px; border-radius: 6px; background: #f3f4f6; cursor: pointer; }
+    .mode-btn.active { background: #dbeafe; color: #1d4ed8; font-weight: 600; }
+
+    .switch { position: relative; display: inline-block; width: 36px; height: 20px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #d1d5db; transition: .2s; border-radius: 9999px; }
+    .slider:before { position: absolute; content: ""; height: 14px; width: 14px; left: 3px; bottom: 3px; background-color: white; transition: .2s; border-radius: 9999px; }
+    input:checked + .slider { background-color: #2563eb; }
+    input:checked + .slider:before { transform: translateX(16px); }
+    .switch-label { margin-left: 6px; color: #6b7280; }
+
+    .output, .input { display: flex; flex-direction: column; padding: 8px; }
+    .output { height: 60%; border-bottom: 1px solid #e5e7eb; }
+    .input { height: 40%; }
+    .toolbar { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+    .spacer { flex: 1; }
+    .editor { width: 100%; height: 100%; resize: none; border: 1px solid #e5e7eb; border-radius: 6px; padding: 8px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; }
+    .feed { width: 100%; height: 100%; overflow: auto; border: 1px solid #e5e7eb; border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 10px; background: #fff; }
+    .feed-item { border: 1px solid #e5e7eb; border-radius: 6px; padding: 8px; background: #fafafa; }
+    .feed-item .meta { font-size: 12px; color: #6b7280; margin-bottom: 6px; display: flex; justify-content: space-between; }
+    .feed-item .content { white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; }
+    .agent-select, .recent-select { margin-left: 6px; padding: 3px 6px; border: 1px solid #e5e7eb; border-radius: 6px; }
+
+    .sessions { overflow: auto; padding: 8px; }
+    .sessions-header { border-bottom: 1px solid #e5e7eb; padding-bottom: 6px; margin-bottom: 6px; }
+    .session-list { list-style: none; padding: 0; margin: 0; }
+    .session-item { padding: 8px; border: 1px solid #e5e7eb; border-radius: 6px; margin-bottom: 8px; cursor: pointer; }
+    .session-item.active { border-color:#2563eb; box-shadow:0 0 0 2px rgba(37,99,235,0.15); }
+    .session-actions { display: flex; gap: 6px; margin-top: 6px; }
+    .badge { display:inline-block; padding:2px 6px; border-radius:10px; font-size:12px; margin-left:6px; }
+    .badge.ok { background:#ecfdf5; color:#059669; }
+    .badge.fail { background:#fef2f2; color:#b91c1c; }
+    .api-indicator small { color:#6b7280; margin-left:6px; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="tabs">
+        <button class="tab active" data-tab="current">当前议题</button>
+        <button class="tab" data-tab="archived">归档议题</button>
+        <button class="tab" data-tab="tags">标签</button>
+      </div>
+      <div class="tab-content" id="tab-current">
+        <ul id="topic-list-current" class="topic-list"></ul>
+        <button id="btn-add-topic" class="btn add">+ 新增议题</button>
+      </div>
+      <div class="tab-content hidden" id="tab-archived">
+        <ul id="topic-list-archived" class="topic-list"></ul>
+      </div>
+      <div class="tab-content hidden" id="tab-tags">
+        <div class="tags-panel">
+          <div class="tags-header">
+            <h4>标签管理</h4>
+            <div class="tag-actions">
+              <input id="input-new-tag" type="text" placeholder="新标签名" />
+              <button id="btn-add-tag" class="btn">新增标签</button>
+            </div>
+          </div>
+          <ul id="tag-list" class="tag-list"></ul>
+          <div class="tag-hint">多选标签后，议题列表按 AND 过滤；新建议题默认继承已选标签。</div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="main">
+      <div class="mode-bar">
+        <div class="modes">
+          <button class="mode-btn active" data-mode="note">笔记</button>
+          <button class="mode-btn" data-mode="search">检索</button>
+          <button class="mode-btn" data-mode="qa">问答</button>
+          <label class="switch">
+            <input type="checkbox" id="auto-mode" />
+            <span class="slider"></span>
+          </label>
+          <span class="switch-label">自动模式（默认关）</span>
+        </div>
+        <div class="api-indicator">
+          <span id="api-status" title="服务器API开关">API: 开</span>
+          <small id="api-base-label"></small>
+        </div>
+      </div>
+
+      <section class="output">
+        <div class="toolbar">
+          <span>输出 Markdown（时间线，可滚动）</span>
+          <div class="spacer"></div>
+          <button class="btn sm" id="btn-output-bold">B</button>
+          <button class="btn sm" id="btn-output-italic">I</button>
+          <button class="btn sm" id="btn-output-copy">复制全部</button>
+          <!-- Team 选择器移动至此（复制全部右侧） -->
+          <div class="picker-group">
+            <button id="btn-pick-team" class="btn sm">选择 Team</button>
+            <select id="recent-teams" class="recent-select">
+              <option value="">最近使用…</option>
+            </select>
+            <input type="file" id="team-file" accept=".json" class="hidden" />
+          </div>
+        </div>
+        <div id="output-feed" class="feed" aria-label="输出区（连续时间线，支持滚动浏览）"></div>
+      </section>
+
+      <section class="input">
+        <div class="toolbar">
+          <span>输入 Markdown</span>
+          <div class="spacer"></div>
+          <button class="btn sm" id="btn-input-bold">B</button>
+          <button class="btn sm" id="btn-input-italic">I</button>
+          <button class="btn sm" id="btn-input-copy">复制全部</button>
+          <button class="btn sm" id="btn-input-paste">粘贴</button>
+          <div class="picker-group">
+            <button id="btn-pick-agent" class="btn sm">选择 Agent</button>
+            <select id="recent-agents" class="recent-select" title="最近使用的 Agent">
+              <option value="">最近使用…</option>
+            </select>
+            <input type="file" id="agent-file" accept=".json" class="hidden" />
+          </div>
+        </div>
+        <div class="toolbar" id="policy-bar" style="gap:12px;">
+          <label><input type="checkbox" id="pol-index-vector"> 向量入队</label>
+          <label><input type="checkbox" id="pol-index-graphrag"> GraphRAG 入队</label>
+          <label>知识库
+            <select id="pol-knowledge-base" class="recent-select">
+              <option value="default">default</option>
+              <option value="kb_project">kb_project</option>
+              <option value="kb_law">kb_law</option>
+            </select>
+          </label>
+          <label>TTL(天)
+            <input id="pol-ttl" type="number" min="0" step="1" style="width:80px;" />
+          </label>
+        </div>
+        <textarea id="input-md" class="editor" placeholder="输入内容。Enter=换行；Alt+Enter=一键加入会话"></textarea>
+        <div class="input-actions">
+          <label class="btn">
+            附件上传
+            <input type="file" id="file-upload" class="hidden" multiple />
+          </label>
+        </div>
+        <div class="hint">快捷键：Alt+Enter 一键加入会话（整理后立即入右侧列表）。</div>
+      </section>
+    </main>
+
+    <aside class="sessions">
+      <div class="sessions-header">
+        <h4>会话记录</h4>
+      </div>
+      <ul id="session-list" class="session-list"></ul>
+      <div style="padding:8px; border-top:1px solid #e5e7eb; display:flex; gap:8px;">
+        <button id="btn-validate-session" class="btn sm" title="对选中的会话进行入库校验（不落库）">测试入库</button>
+      </div>
+    </aside>
+  </div>
+
+  <script>
+  (function(){
+    const $ = (s,p=document)=>p.querySelector(s); const $$=(s,p=document)=>Array.from(p.querySelectorAll(s));
+    const uid = () => Math.random().toString(36).slice(2,10);
+    const escapeHTML = s=> (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
+
+    const state = {
+      activeTab:'current', activeMode:'note', autoMode:false,
+      selectedTeam:null, selectedAgent:null,
+      recentTeams:[], recentAgents:[],
+      selectedTags:new Set(),
+      topics:{ current:[], archived:[] },
+      sessions:[], // {id,topicId,content,createdAt,favorited}
+      activeTopicId:null,
+      selectedSessionId:null
+    };
+
+    // persistence
+    function persist(){
+      const feed = $('#output-feed');
+      const feedData = Array.from(feed.querySelectorAll('.feed-item')).map(el=>({
+        topicId: el.dataset.topicId||null,
+        role: el.dataset.role||'user',
+        meta: el.querySelector('.meta')?.textContent||'',
+        content: el.querySelector('.content')?.textContent||''
+      }));
+      const data={
+        topics:state.topics, sessions:state.sessions,
+        selectedTags:[...state.selectedTags], activeMode:state.activeMode,
+        activeTab: state.activeTab, activeTopicId: state.activeTopicId,
+        feed:feedData
+      };
+      localStorage.setItem('notes_ui_state_v1', JSON.stringify(data));
+    }
+
+    function collectPolicy(){
+      const p = {
+        index_vector: ($('#pol-index-vector').checked?1:0),
+        index_graphrag: ($('#pol-index-graphrag').checked?1:0),
+        knowledge_base: $('#pol-knowledge-base').value || null,
+        retention_ttl_days: (function(){ const v=$('#pol-ttl').value; return v? parseInt(v,10): null; })()
+      };
+      try { localStorage.setItem('notes_policy_v1', JSON.stringify(p)); } catch {}
+      return p;
+    }
+    function restorePolicy(){
+      try { const raw = localStorage.getItem('notes_policy_v1'); if(!raw) return; const p = JSON.parse(raw);
+        $('#pol-index-vector').checked = !!p.index_vector;
+        $('#pol-index-graphrag').checked = !!p.index_graphrag;
+        if(p.knowledge_base) $('#pol-knowledge-base').value = p.knowledge_base;
+        if(p.retention_ttl_days!=null) $('#pol-ttl').value = p.retention_ttl_days;
+      } catch {}
+    }
+    window.persistUI = persist;
+    function load(){
+      try{ const raw=localStorage.getItem('notes_ui_state_v1'); if(!raw) return null; return JSON.parse(raw);}catch{return null}
+    }
+
+    // team/agent recent helpers
+    const RECENT_TEAMS_KEY='notes_recent_teams_v1';
+    const RECENT_AGENTS_KEY='notes_recent_agents_v1';
+    function loadRecent(key){ try{return JSON.parse(localStorage.getItem(key)||'[]')}catch{return []} }
+    function saveRecent(key, path, name){ const list=loadRecent(key); if(!list.find(x=>x.path===path)){ list.unshift({path,name,ts:Date.now()}); localStorage.setItem(key, JSON.stringify(list.slice(0,10))); } }
+    function renderRecentSelect(selId, key){ const list=loadRecent(key); const sel=$(selId); sel.innerHTML='<option value="">最近使用…</option>'+list.map(rt=>`<option value="${encodeURIComponent(rt.path)}">${rt.name}</option>`).join(''); }
+
+    // tabs
+    function bindTabs(){
+      $$('.tab').forEach(btn=>{
+        btn.addEventListener('click',()=>{
+          $$('.tab').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
+          state.activeTab=btn.dataset.tab; $$('.tab-content').forEach(c=>c.classList.add('hidden')); $(`#tab-${state.activeTab}`).classList.remove('hidden');
+          persist();
+        })
+      })
+    }
+
+    // topics
+    function topicItemHTML(t){
+      const favIcon = t.favorited ? '★' : '☆';
+      const delDisabled = t.favorited ? 'disabled' : '';
+      return `<li class="topic-item" data-id="${t.id}">
+        <input class="topic-title" value="${escapeHTML(t.title)}" />
+        <div class="topic-actions">
+          <button type="button" class="icon-btn fav" data-act="fav" title="收藏">${favIcon}</button>
+          <button type="button" class="icon-btn export" data-act="export" title="导出">⤓</button>
+          <button type="button" class="icon-btn archive" data-act="archive" title="归档">🗂️</button>
+          <button type="button" class="icon-btn delete" data-act="del" title="删除" ${delDisabled}>🗑️</button>
+        </div>
+      </li>`;
+    }
+    function renderTopics(){
+      const lists={ current:$('#topic-list-current'), archived:$('#topic-list-archived') };
+      Object.entries(lists).forEach(([key,ul])=>{
+        const set=state.topics[key]||[]; const selected=[...state.selectedTags];
+        const filtered= selected.length? set.filter(t=> selected.every(tag=> (t.tags||[]).includes(tag))): set;
+        ul.innerHTML=filtered.map(t=>topicItemHTML(t)).join('');
+      });
+      // bind items
+      $$('#topic-list-current .topic-item, #topic-list-archived .topic-item').forEach(item=>bindTopicItem(item));
+    }
+    function bindTopicItem(el){
+      const id=el.dataset.id; const input=$('.topic-title',el);
+      el.addEventListener('click',e=>{ if(e.target.closest('.topic-actions')) return; setActiveTopic(id); locateToTopic(id); });
+      input.addEventListener('click',()=>{ setActiveTopic(id); locateToTopic(id); });
+      input.addEventListener('dblclick',()=> input.removeAttribute('readonly'));
+      input.addEventListener('blur',()=>{ const t=findTopicById(id); if(t){ t.title=(input.value||'').trim()||t.title; persist(); }});
+      const act=n=>$('.topic-actions [data-act="'+n+'"]',el);
+      act('fav').addEventListener('click',e=>{e.stopPropagation(); toggleFav(id); persist();});
+      act('export').addEventListener('click',e=>{e.stopPropagation(); exportTopic(id);});
+      act('archive').addEventListener('click',e=>{e.stopPropagation(); toggleArchive(id); persist();});
+      act('del').addEventListener('click',e=>{e.stopPropagation(); deleteTopic(id); persist();});
+    }
+    function findTopicById(id){ return state.topics.current.find(t=>t.id===id) || state.topics.archived.find(t=>t.id===id); }
+    function setActiveTopic(id){
+      state.activeTopicId=id;
+      document.querySelectorAll('.topic-item').forEach(el=> el.classList.toggle('active', el.dataset.id===id));
+      // 同步刷新右侧会话列表
+      renderSessions();
+      // 同步过滤中间栏输出时间线
+      filterFeedByActiveTopic();
+      persist();
+    }
+    function locateToTopic(id){ // 输出时间线定位到该议题的最后一条
+      const feed=$('#output-feed'); const items=Array.from(feed.querySelectorAll('.feed-item')).filter(x=>x.dataset.topicId===String(id));
+      if(items.length){ items[items.length-1].scrollIntoView({behavior:'smooth', block:'center'}); }
+      // 右栏定位到该议题最新会话
+      const sessions=Array.from($('#session-list').querySelectorAll('.session-item')).filter(x=>x.dataset.topicId===String(id));
+      if(sessions.length){ sessions[0].scrollIntoView({behavior:'smooth', block:'nearest'}); }
+    }
+
+    // 根据当前选中议题过滤中间栏的输出时间线
+    function filterFeedByActiveTopic(){
+      const activeId = state.activeTopicId ? String(state.activeTopicId) : null;
+      const items = $$('#output-feed .feed-item');
+      items.forEach(el=>{
+        if(!activeId){ el.style.display=''; return; }
+        const tid = el.dataset.topicId || '';
+        el.style.display = (String(tid)===activeId) ? '' : 'none';
+      });
+    }
+    function toggleFav(id){ const t=findTopicById(id); if(!t) return; t.favorited=!t.favorited; renderTopics(); }
+    function toggleArchive(id){ let from=state.topics.current, to=state.topics.archived; let t=from.find(x=>x.id===id); if(!t){ from=state.topics.archived; to=state.topics.current; t=from.find(x=>x.id===id); }
+      if(!t||t.favorited) return; from.splice(from.indexOf(t),1); t.archived=!t.archived; to.unshift(t); renderTopics(); }
+    function deleteTopic(id){ const t=findTopicById(id); if(!t||t.favorited) return; if(!confirm('确认删除该议题及其所有会话与输出内容？')) return;
+      state.topics.current=state.topics.current.filter(x=>x.id!==id); state.topics.archived=state.topics.archived.filter(x=>x.id!==id);
+      state.sessions=state.sessions.filter(s=>s.topicId!==id);
+      const feed=$('#output-feed'); Array.from(feed.querySelectorAll('.feed-item')).forEach(item=>{ if(item.dataset.topicId===String(id)) item.remove(); });
+      if(state.activeTopicId===id) state.activeTopicId=null; renderTopics(); renderSessions(); }
+
+    // export: topic -> markdown + attachments.json (创建时间升序)
+    async function exportTopic(topicId){
+      if(apiEnabled){ try{ const res = await fetch(`${apiBase}/export/topic/${encodeURIComponent(topicId)}`); const data = await res.json(); downloadText(`topic-${topicId}.md`, data.markdown||'', 'text/markdown;charset=utf-8'); downloadText('attachments.json', JSON.stringify(data.attachments||[], null, 2), 'application/json;charset=utf-8'); return; } catch(err){ console.warn('[export api] 失败，改用本地导出', err); } }
+      const t = findTopicById(topicId); if(!t){ alert('未找到该议题'); return; }
+      const notes = state.sessions.filter(s=> s.topicId===topicId).slice().sort((a,b)=> (a.createdAt||0)-(b.createdAt||0));
+      const lines = [];
+      lines.push(`# 议题：${t.title}`);
+      lines.push('');
+      notes.forEach((n, idx)=>{ const ts = new Date(n.createdAt||Date.now()).toLocaleString(); lines.push(`## 笔记 ${idx+1}`); lines.push(`> 创建时间：${ts}`); lines.push(''); lines.push(n.content||''); lines.push(''); });
+      downloadText(`topic-${topicId}.md`, lines.join('\n'), 'text/markdown;charset=utf-8');
+      downloadText('attachments.json', JSON.stringify([], null, 2), 'application/json;charset=utf-8');
+    }
+
+    function downloadText(filename, content, mime){
+      const blob = new Blob([content], {type: mime||'text/plain;charset=utf-8'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = filename; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=> URL.revokeObjectURL(url), 1000);
+    }
+
+    $('#btn-add-topic').addEventListener('click',()=>{ const id=uid(); const tags=[...state.selectedTags]; state.topics.current.unshift({id, title:`新议题_${id}`, tags, favorited:false, archived:false}); renderTopics(); setActiveTopic(id); persist(); });
+
+    // tags
+    const tagSet=new Set();
+    function renderTags(){ const ul=$('#tag-list'); const all=[...tagSet]; ul.innerHTML= all.map(tag=>`<li class="tag-item"><label><input type="checkbox" data-tag="${tag}" ${state.selectedTags.has(tag)?'checked':''}/> ${tag}</label><button class="btn sm secondary" data-del="${tag}">删</button></li>`).join('');
+      $$('#tag-list input[type="checkbox"]').forEach(cb=> cb.addEventListener('change',()=>{ const tag=cb.dataset.tag; if(cb.checked) state.selectedTags.add(tag); else state.selectedTags.delete(tag); renderTopics(); persist(); }));
+      $$('#tag-list [data-del]').forEach(btn=> btn.addEventListener('click',()=>{ tagSet.delete(btn.dataset.del); state.selectedTags.delete(btn.dataset.del); renderTags(); renderTopics(); persist(); }));
+    }
+    $('#btn-add-tag').addEventListener('click',()=>{ const name=$('#input-new-tag').value.trim(); if(!name) return; tagSet.add(name); $('#input-new-tag').value=''; renderTags(); persist(); });
+
+    // modes
+    $$('.mode-btn').forEach(btn=> btn.addEventListener('click',()=>{ $$('.mode-btn').forEach(b=>b.classList.remove('active')); btn.classList.add('active'); state.activeMode=btn.dataset.mode; persist(); }));
+    $('#auto-mode').addEventListener('change',e=>{ state.autoMode=!!e.target.checked; persist(); });
+
+    // team & agent pickers
+    $('#btn-pick-team').addEventListener('click',()=>$('#team-file').click());
+    $('#team-file').addEventListener('change',e=>{ const f=e.target.files?.[0]; if(!f) return; state.selectedTeam={name:f.name,path:f.name}; saveRecent(RECENT_TEAMS_KEY,f.name,f.name); renderRecentSelect('#recent-teams',RECENT_TEAMS_KEY); });
+    $('#recent-teams').addEventListener('change',e=>{ const v=e.target.value; if(!v) return; const path=decodeURIComponent(v); const item=loadRecent(RECENT_TEAMS_KEY).find(x=>x.path===path); if(item) state.selectedTeam={name:item.name,path:item.path}; });
+
+    $('#btn-pick-agent').addEventListener('click',()=>$('#agent-file').click());
+    $('#agent-file').addEventListener('change',e=>{ const f=e.target.files?.[0]; if(!f) return; state.selectedAgent={name:f.name,path:f.name}; saveRecent(RECENT_AGENTS_KEY,f.name,f.name); renderRecentSelect('#recent-agents',RECENT_AGENTS_KEY); });
+    $('#recent-agents').addEventListener('change',e=>{ const v=e.target.value; if(!v) return; const path=decodeURIComponent(v); const item=loadRecent(RECENT_AGENTS_KEY).find(x=>x.path===path); if(item) state.selectedAgent={name:item.name,path:item.path}; });
+
+    // editors & shortcuts
+    function wrap(textarea, wrapper){ const s=textarea.selectionStart, e=textarea.selectionEnd, v=textarea.value; textarea.value = v.slice(0,s)+wrapper+v.slice(s,e)+wrapper+v.slice(e); textarea.focus(); }
+    $('#btn-input-bold').addEventListener('click',()=> wrap($('#input-md'),'**'));
+    $('#btn-input-italic').addEventListener('click',()=> wrap($('#input-md'),'*'));
+    $('#btn-input-copy').addEventListener('click',()=> navigator.clipboard.writeText($('#input-md').value));
+    $('#btn-input-paste').addEventListener('click', async()=> { const t=await navigator.clipboard.readText(); $('#input-md').value += t; });
+
+    $('#btn-output-bold').addEventListener('click',()=> wrapLastFeed('**'));
+    $('#btn-output-italic').addEventListener('click',()=> wrapLastFeed('*'));
+    $('#btn-output-copy').addEventListener('click',()=> { const texts=[...$('#output-feed').querySelectorAll('.feed-item .content')].map(n=>n.textContent||''); navigator.clipboard.writeText(texts.join('\n\n')); });
+
+    $('#file-upload').addEventListener('change',async e=>{ const files=[...(e.target.files||[])]; if(!files.length) return; if(!apiEnabled){ console.log('[upload] 本地模式占位', files.map(f=>({name:f.name,size:f.size}))); return; } for(const f of files){ try{ const fd=new FormData(); fd.append('topic_id', state.activeTopicId||''); fd.append('file', f, f.name); const res= await fetch(`${apiBase}/ingest`, { method:'POST', body: fd }); const data = await res.json(); console.log('[ingest] ok', data); } catch(err){ console.error('[ingest] 失败', err); } } });
+
+    function appendFeedItem({role,content,agent,topicId}){
+      const feed=$('#output-feed'); const time=new Date().toLocaleString();
+      const div=document.createElement('div'); div.className='feed-item';
+      div.dataset.role=role||'user'; if(topicId) div.dataset.topicId=String(topicId);
+      div.innerHTML=`<div class="meta"><span>${role==='user'?'输入/预处理':'输出/结果'} · ${agent||''}</span><span>${time}</span></div><div class="content"></div>`;
+      div.querySelector('.content').textContent=content;
+      // 初步按当前议题决定是否可见
+      const activeId = state.activeTopicId ? String(state.activeTopicId) : null;
+      if(activeId){ const tid = div.dataset.topicId || ''; div.style.display = (String(tid)===activeId)? '' : 'none'; }
+      feed.appendChild(div);
+      // 统一再执行一次过滤，确保其他条目状态正确
+      filterFeedByActiveTopic();
+      // 定位到底部/可见区域
+      feed.scrollTop=feed.scrollHeight;
+      persist();
+    }
+    function wrapLastFeed(wrapper){ const items=$$('#output-feed .feed-item .content'); if(!items.length) return; const last=items[items.length-1]; last.textContent = `${wrapper}${last.textContent}${wrapper}`; persist(); }
+    function latestFeedText(){ const items=$$('#output-feed .feed-item .content'); if(!items.length) return ''; return items[items.length-1].textContent||''; }
+
+    async function preprocess(){
+      const text=$('#input-md').value;
+      const agentSelected = !!(state.selectedAgent && state.selectedAgent.path);
+      const agent=state.selectedAgent?.name||'default';
+      // 情况1：未选择Agent → 直接原样输出
+      if(!agentSelected){ appendFeedItem({role:'user', content:text, agent:'(无Agent)', topicId: state.activeTopicId}); $('#input-md').value=''; return; }
+      // 情况2：选择了Agent → 走API（若API不可用则回退原样输出）
+      if(apiEnabled){
+        try{
+          const res = await fetch(`${apiBase}/preprocess`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ topic_id: state.activeTopicId, raw_md: text, mode: state.activeMode, agent_config_path: state.selectedAgent?.path||null }) });
+          const data = await res.json();
+          appendFeedItem({role:'user', content:data.markdown||text, agent, topicId: state.activeTopicId});
+        }catch(err){ console.warn('[preprocess api] 失败，回退本地', err); appendFeedItem({role:'user', content:text, agent, topicId: state.activeTopicId}); }
+      } else {
+        appendFeedItem({role:'user', content:text, agent, topicId: state.activeTopicId});
+      }
+      $('#input-md').value='';
+    }
+    async function onAltEnter(){
+      if(!state.activeTopicId){ alert('请先选择一个议题'); return; }
+      await preprocess();
+      // 预处理完成后，立即把最新输出加入右侧会话列表（本地，不自动入库）
+      const content=latestFeedText(); const topicId=state.activeTopicId; if(!topicId){ return; }
+      if(state.activeMode==='note' || state.activeMode==='search'){
+        const sid=uid(); state.sessions.unshift({id:sid, topicId, content, createdAt: Date.now(), favorited:false, dbStatus:'local'}); renderSessions();
+      } else if(state.activeMode==='qa'){
+        const sid=uid(); const answer=content+"\n\n> [占位查询结果]"; appendFeedItem({role:'assistant', content:answer, agent: state.selectedTeam?.name||'team', topicId}); state.sessions.unshift({id:sid, topicId, content:answer, createdAt: Date.now(), favorited:false, dbStatus:'local'}); renderSessions();
+      }
+      persist();
+    }
+
+    $('#input-md').addEventListener('keydown',e=>{ if(e.key==='Enter' && e.altKey){ e.preventDefault(); onAltEnter(); } });
+
+    function renderSessions(){
+      const ul=$('#session-list');
+      const activeId = state.activeTopicId;
+      const list = activeId ? state.sessions.filter(s=> String(s.topicId)===String(activeId)) : state.sessions;
+      ul.innerHTML = list.map(s=>{
+        const delDisabled = s.favorited ? 'disabled' : '';
+        const favIcon = s.favorited ? '★' : '☆';
+        const status = (s.dbStatus==='done')? '<span class="badge ok" title="已写入后端">已入库</span>' : (s.dbStatus? '<span class="badge fail" title="未写入后端">未入库</span>':'' );
+        const meta = s.noteId? ` <small title="note_id">#${s.noteId.slice(0,8)}</small>`: '';
+        return `<li class="session-item" data-id="${s.id}" data-topic-id="${s.topicId}"><div class="session-content">${escapeHTML((s.content||'').slice(0,200))}${status}${meta}</div><div class="session-actions"><button class="icon-btn fav" data-act="fav" title="收藏">${favIcon}</button><button class="icon-btn copy" data-act="copy" title="复制">📋</button><button class="btn sm" data-act="store" title="入库">入库</button><button class="icon-btn delete" data-act="del" title="删除" ${delDisabled}>🗑️</button></div></li>`;
+      }).join('');
+      $$('#session-list .session-item').forEach(item=>{ const id=item.dataset.id; const find=()=> state.sessions.find(x=>x.id===id);
+        $('[data-act="fav"]',item).addEventListener('click',()=>{ const s=find(); if(s){ s.favorited=!s.favorited; renderSessions(); persist(); }});
+        $('[data-act="copy"]',item).addEventListener('click',()=>{ const s=find(); if(s) navigator.clipboard.writeText(s.content); });
+        $('[data-act="store"]',item).addEventListener('click', async()=>{ const s=find(); if(!s){ return; } if(s.dbStatus==='done' && s.noteId){ alert('该会话已入库'); return; } const payload={ topic_id:String(s.topicId), final_md:s.content, mode: state.activeMode, team_config_path: state.selectedTeam?.path||null, policy: collectPolicy() }; try{ const res= await fetch(`${apiBase}/notes/store`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) }); const data = await res.json(); if(data && data.note_id){ s.dbStatus = data.db_status || 'done'; s.noteId = data.note_id; renderSessions(); appendFeedItem({ role:'assistant', content:`入库完成：#${String(data.note_id).slice(0,8)}`, agent:'store', topicId: state.activeTopicId }); } else { alert('入库返回无 note_id'); } } catch(err){ alert('入库失败：'+ String(err)); }
+        });
+        $('[data-act="del"]',item).addEventListener('click',()=>{ const s=find(); if(!s) return; if(s.favorited){ alert('该会话已收藏，不能删除'); return; } if(!confirm('确认删除该会话块及其在输出区的对应内容？')) return; state.sessions = state.sessions.filter(x=>x.id!==id); renderSessions(); const feed=$('#output-feed'); const contents=[...feed.querySelectorAll('.feed-item .content')].map(n=>n.textContent||''); const idx=contents.lastIndexOf(s.content||''); if(idx>=0){ feed.querySelectorAll('.feed-item')[idx]?.remove(); } persist(); });
+        // 点击选择会话
+        item.addEventListener('click',e=>{ if(e.target.closest('.session-actions')) return; document.querySelectorAll('.session-item').forEach(el=> el.classList.remove('active')); item.classList.add('active'); state.selectedSessionId = id; const s=find(); if(!s) return; const feed=$('#output-feed'); const items=[...feed.querySelectorAll('.feed-item')]; const pos=items.findIndex(n=> (n.querySelector('.content')?.textContent||'') === (s.content||'')); if(pos>=0) items[pos].scrollIntoView({behavior:'smooth', block:'center'}); });
+      });
+    }
+
+    // 统一“测试入库”按钮逻辑
+    async function validateSelectedSession(){ const id = state.selectedSessionId; if(!id){ alert('请先点击选择一条会话'); return; } const s = state.sessions.find(x=>x.id===id); if(!s){ alert('未找到该会话'); return; } if(!s.noteId){ alert('该会话缺少 note_id，可能是本地模式或旧数据，无法测试入库'); return; } try{ const payload = { topic_id: String(s.topicId), note_id: String(s.noteId), expect: (s.content||'').slice(0,200), api_base: apiBase }; const res = await fetch(`${apiBase}/test/validate`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) }); const data = await res.json(); const ok = !!(data && (data.ok===true || data.ok==='true')); let report = (data && data.report_markdown) ? String(data.report_markdown) : ''; if(!report || !report.trim()){ try{ report = '返回数据：\n\n```json\n'+ JSON.stringify(data, null, 2) + '\n```'; } catch{ report = '（无报告）'; } } const finalMd = (ok? '✅ 测试通过' : '❌ 测试未通过') + '\n\n' + report; appendFeedItem({ role:'assistant', content: finalMd, agent:'validator', topicId: state.activeTopicId }); // 同时写入会话列表（本地，不入库）
+      const sid=uid(); state.sessions.unshift({ id:sid, topicId: state.activeTopicId, content: finalMd, createdAt: Date.now(), favorited:false, dbStatus:'local' }); renderSessions(); persist();
+      } catch(err){ appendFeedItem({ role:'assistant', content: '测试入库失败：'+ String(err), agent:'validator', topicId: state.activeTopicId }); }
+    }
+
+    // init
+    // API 默认 3000；支持通过 window.apiBaseOverride 或 localStorage('apiBaseOverride') 覆盖
+    const apiBase = (window.apiBaseOverride) || (function(){
+      try { return localStorage.getItem('apiBaseOverride') || 'http://127.0.0.1:3000'; } catch { return 'http://127.0.0.1:3000'; }
+    })();
+    // 将选择持久化，便于刷新后保留
+    try { localStorage.setItem('apiBaseOverride', apiBase); } catch {}
+    let apiEnabled = true;
+    document.getElementById('api-status').textContent = 'API: 开';
+    document.getElementById('api-base-label').textContent = apiBase;
+
+    function init(){
+      // load saved or demo
+      const saved=load();
+      if(saved){ state.topics=saved.topics||state.topics; state.sessions=saved.sessions||state.sessions; state.selectedTags=new Set(saved.selectedTags||[]); state.activeMode=saved.activeMode||state.activeMode; state.activeTab=saved.activeTab||'current'; state.activeTopicId=saved.activeTopicId||null; setTimeout(()=>{ const feed=$('#output-feed'); (saved.feed||[]).forEach(it=> appendFeedItem({role:it.role, content:it.content, agent:'', topicId: it.topicId})); },0); }
+      else { state.topics.current=[ {id:uid(), title:'项目周报', tags:['需求','内部'], favorited:false, archived:false}, {id:uid(), title:'法规研读', tags:['法规'], favorited:true, archived:false} ]; }
+
+      // tabs
+      $$('.tab').forEach(b=> b.classList.toggle('active', b.dataset.tab===state.activeTab));
+      $$('.tab-content').forEach(c=> c.classList.toggle('hidden', c.id !== `tab-${state.activeTab}`));
+
+      // demo tags
+      ;['需求','规划','法规','内部'].forEach(t=> tagSet.add(t));
+
+      // renders
+      renderRecentSelect('#recent-teams', RECENT_TEAMS_KEY);
+      renderRecentSelect('#recent-agents', RECENT_AGENTS_KEY);
+      renderTags(); renderTopics(); renderSessions();
+      if(state.activeTopicId){ setActiveTopic(state.activeTopicId); locateToTopic(state.activeTopicId); }
+      // 恢复策略
+      restorePolicy();
+
+      bindTabs();
+      // 简单健康检查 + 轮询
+      function updateApiIndicator(ok){ apiEnabled=!!ok; document.getElementById('api-status').textContent = ok? 'API: 开' : 'API: 关'; document.getElementById('api-base-label').textContent = apiBase; }
+      async function checkHealth(){ try{ const res = await fetch(`${apiBase}/healthz`, { cache:'no-store' }); updateApiIndicator(res.ok); } catch{ updateApiIndicator(false); } }
+      checkHealth();
+      setInterval(checkHealth, 10000);
+      // 初次进入时，根据已选议题过滤中间栏
+      filterFeedByActiveTopic();
+      // 绑定统一“测试入库”按钮
+      const btnValidate = document.getElementById('btn-validate-session');
+      if(btnValidate){ btnValidate.addEventListener('click', validateSelectedSession); }
+    }
+
+    init();
+  })();
+  </script>
+</body>
+</html>

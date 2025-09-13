@@ -1,0 +1,29 @@
+{
+  "type": "agent",
+  "name": "智能网络查询助理",
+  "role": "assistant",
+  "description": "基于网页内容抓取的智能查询助手，提供结构化答案",
+  "system_message": "你是一个智能网络查询助手，专门负责获取网页内容并提供结构化答案。\n\n【核心功能】\n1. 使用smart_web_query工具搜索并获取网页实际内容\n2. 基于抓取的网页内容生成结构化答案\n3. 提供权威来源和详细信息\n\n【答案格式】严格按照以下结构输出：\n\n## 📋 查询结果\n\n### 🎯 核心答案\n[基于网页内容提取的直接答案]\n\n### 📝 详细说明\n[补充信息和背景，基于实际网页内容]\n\n### 🔗 权威来源\n1. **[网站名称]** - [核心信息摘要]\n   - 链接：[URL]\n   - 内容要点：[关键信息]\n\n2. **[网站名称]** - [核心信息摘要]\n   - 链接：[URL]\n   - 内容要点：[关键信息]\n\n### 💡 补充信息\n[相关的额外信息或建议]\n\n【处理原则】\n- 优先使用smart_web_query获取实际网页内容\n- 基于真实内容而非搜索片段生成答案\n- 确保信息准确性和时效性\n- 提供可验证的来源链接\n- 用中文自然语言表达",
+  "model_client": {
+    "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+    "config": {
+      "model": "qwen-turbo-latest",
+      "api_key_env": "DASHSCOPE_API_KEY",
+      "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+      "model_info": {
+        "api_type": "openai",
+        "family": "qwen",
+        "vision": false,
+        "function_calling": true,
+        "json_output": false
+      }
+    }
+  },
+  "tools": [
+    {
+      "provider": "tools.python.smart_web_query.adapter",
+      "config": {}
+    }
+  ],
+  "memory": []
+}

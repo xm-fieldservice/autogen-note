@@ -1,0 +1,53 @@
+{
+  "project": "vector_demo",
+  "memory": {
+    "backend": "chromadb",
+    "persist_directory": "data/autogen_official_memory/vector_demo/",
+    "collection_name": "vector_demo_assistant",
+    "distance_metric": "cosine",
+    "k": 8,
+    "score_threshold": 0.25,
+    "embedding": "sentence-transformers/all-MiniLM-L6-v2"
+  },
+  "embedding": {
+    "provider": "st",
+    "model": "sentence-transformers/all-MiniLM-L6-v2",
+    "dim": 384,
+    "normalize": true,
+    "api_profile": "default"
+  },
+  "retrieval_profiles": {
+    "qa_default": {
+      "k": 8,
+      "score_threshold": 0.25
+    },
+    "long_doc": {
+      "k": 15,
+      "score_threshold": 0.15,
+      "rerank": true
+    },
+    "log_search": {
+      "k": 5,
+      "score_threshold": 0.35
+    }
+  },
+  "archive": {
+    "root": "data/archive/vector_demo/",
+    "retention_days": 365,
+    "versioning": true
+  },
+  "security": {
+    "allow_download": true,
+    "require_signed_url": true
+  },
+  "governance": {
+    "pii_in_metadata": false,
+    "notes": "敏感信息仅保留在原始库域"
+  },
+  "agent": {
+    "name": "assistant",
+    "model": "gpt-4o-mini",
+    "tools": [],
+    "memory_attached": true
+  }
+}

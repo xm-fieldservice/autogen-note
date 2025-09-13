@@ -1,0 +1,7 @@
+{
+  "id": "qa_history",
+  "name": "QA History (SQLite)",
+  "entry": "impl.py",
+  "type": "python",
+  "tags": ["history", "sqlite", "qa"]
+}

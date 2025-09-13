@@ -1,0 +1,58 @@
+{
+  "provider": "autogen_agentchat.teams.RoundRobinGroupChat",
+  "component_type": "team",
+  "version": 1,
+  "component_version": 1,
+  "description": "A team that runs a group chat with participants taking turns in a round-robin fashion",
+  "label": "test",
+  "config": {
+    "name": "test",
+    "description": "Generated from participant list",
+    "participants": [
+      {
+        "provider": "autogen_agentchat.agents.AssistantAgent",
+        "component_type": "agent",
+        "version": 1,
+        "component_version": 1,
+        "config": {
+          "name": "Assistant",
+          "system_message": "你必须真实调用已挂接检索工具完成任务。输出严格遵守以下规则：\n- 遇到”\\n\\n\", 换两行，同时去掉该符号\n- 返回不超过10条。\n- 每条用四行，字段与顺序固定：\n  媒体：<媒体名称>\n  标题：<必须是中文标题，不能使用英文>\n  链接：<URL>\n  时间：<YYYY-MM-DD>\n- 每两条之间插入一个空行（即两个换行），不要使用项目符号或编号。\n- 仅输出上述内容，不得输出任何其他文字（无前言/后记/解释/评论）。\n若无法满足格式，返回字符串：FORMAT_ERROR",
+          "model_client": {
+            "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+            "config": {
+              "model": "qwen-turbo-latest",
+              "api_key_env": "DASHSCOPE_API_KEY",
+              "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+              "model_info": {
+                "api_type": "openai",
+                "family": "qwen",
+                "vision": false,
+                "function_calling": true,
+                "json_output": true,
+                "structured_output": false,
+                "organization": null,
+                "timeout": null
+              },
+              "timeout": 60,
+              "parameters": {
+                "temperature": 0,
+                "top_p": 0.95,
+                "max_tokens": 1024
+              }
+            }
+          },
+          "capabilities": {
+            "tools": {
+              "google.search": {
+                "enabled": true
+              }
+            }
+          }
+        }
+      }
+    ],
+    "termination_condition": null,
+    "max_turns": 10,
+    "emit_team_events": false
+  }
+}

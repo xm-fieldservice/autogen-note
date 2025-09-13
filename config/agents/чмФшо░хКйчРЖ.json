@@ -1,0 +1,156 @@
+{
+  "type": "agent",
+  "name": "笔记助理",
+  "role": "assistant",
+  "description": "基于向量库的检索增强 Agent（内生 ChromaDB 内存）",
+  "system_message": "你是一个严格遵循指令的助手。\n\n【记忆优先】当存在向量记忆/Memory 召回结果时，必须优先基于召回片段直接作答；若未命中，再进行常规推理，并在必要时说明'未命中记忆'。\n\n【反向关系重写】当用户问题属于反向关系（如：'谁…？'、'有哪些…属于…？'），请先将问题重写为可检索的实体-属性查询，再检索并作答。示例：\n- 原问：谁喜欢红色？\n- 重写：在已知记忆中，与'喜欢 颜色=红色'相关的主体有哪些？请列出主体名称。\n\n【智能网络查询】使用enhanced_web_query工具进行智能混合抓取，自动选择最佳策略：\n## 📋 查询结果\n### 🎯 核心答案\n[基于实际网页内容的直接答案]\n### 📝 详细说明\n[补充信息和背景]\n### 🔗 权威来源\n1. **[网站名]** - [核心信息]\n   - 链接：[URL]\n   - 抓取方式：[requests/playwright]\n   - 要点：[关键内容]\n### 💡 查询统计\n- 策略级别：[basic/advanced]\n- 抓取统计：requests(X) + playwright(X)\n\n【处理原则】1)工具自动选择抓取策略 2)基于实际网页内容 3)严禁输出原始JSON 4)显示抓取方式统计\n\n【归纳检索(GraphRAG) 工具选择】当用户使用\"#归纳\"或\"[graphrag]\"前缀时，必须调用 GraphRAG 工具：\n- 若问题为宏观/主题/趋势/关系/社区/图谱等，请调用 global_search；\n- 若问题聚焦具体实体/边/关系细节，请调用 local_search；\n工具返回后请用简洁中文汇总；禁止写入向量库。",
+  "memory_write_policy": "qa_both",
+  "model_client": {
+    "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+    "config": {
+      "model": "qwen-turbo-latest",
+      "api_key_env": "DASHSCOPE_API_KEY",
+      "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+      "model_info": {
+        "api_type": "openai",
+        "family": "qwen",
+        "vision": false,
+        "function_calling": true,
+        "json_output": true,
+        "structured_output": false,
+        "organization": null,
+        "timeout": null
+      },
+      "parameters": {
+        "temperature": 0.7,
+        "max_tokens": 4096,
+        "timeout": 30
+      },
+      "stop": []
+    }
+  },
+  "tools": [
+    {
+      "provider": "tools.python.smart_web_query.enhanced_adapter",
+      "config": {}
+    },
+    {
+      "type": "python",
+      "name": "graphrag_global_search",
+      "module": "autogen_ext.tools.graphrag._global_search",
+      "class": "GlobalSearchTool",
+      "init": {
+        "method": "from_settings",
+        "kwargs": {
+          "root_dir": "./graphrag",
+          "config_filepath": "./graphrag/settings.yaml"
+        }
+      }
+    },
+    {
+      "type": "python",
+      "name": "graphrag_local_search",
+      "module": "autogen_ext.tools.graphrag._local_search",
+      "class": "LocalSearchTool",
+      "init": {
+        "method": "from_settings",
+        "kwargs": {
+          "root_dir": "./graphrag",
+          "config_filepath": "./graphrag/settings.yaml"
+        }
+      }
+    }
+  ],
+  "capabilities": {
+    "tools": {
+      "google.search": { "enabled": true },
+      "graphrag_global_search": { "enabled": true },
+      "graphrag_local_search": { "enabled": true }
+    }
+  },
+  "memory": [
+    {
+      "type": "chroma_vector_memory",
+      "provider": "autogen_ext.memory.chromadb.ChromaDBVectorMemory",
+      "component_type": "memory",
+      "version": 1,
+      "component_version": 1,
+      "label": "ChromaDBVectorMemory",
+      "description": "Store and retrieve memory using vector similarity search powered by ChromaDB.",
+      "write_enabled": true,
+      "config": {
+        "client_type": "persistent",
+        "persistence_path": "./data/autogen_official_memory/vector_demo/",
+        "collection_name": "vector_demo_assistant",
+        "distance_metric": "cosine",
+        "k": 8,
+        "score_threshold": 0.1,
+        "allow_reset": false,
+        "tenant": "default_tenant",
+        "database": "default_database",
+        "embedding_function_config": {
+          "function_type": "openai_compatible",
+          "api_key_env": "DASHSCOPE_API_KEY",
+          "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+          "model": "text-embedding-v3"
+        }
+      }
+    },
+    {
+      "type": "chroma_vector_memory",
+      "provider": "autogen_ext.memory.chromadb.ChromaDBVectorMemory",
+      "component_type": "memory",
+      "version": 1,
+      "component_version": 1,
+      "label": "ChromaDBVectorMemory",
+      "description": "Session cache vector memory for per-session recall",
+      "write_enabled": true,
+      "config": {
+        "client_type": "persistent",
+        "persistence_path": "./data/vector_db/cache/",
+        "collection_name": "session_cache_{session_id}",
+        "distance_metric": "cosine",
+        "k": 2,
+        "score_threshold": 0.4,
+        "allow_reset": false,
+        "tenant": "default_tenant",
+        "database": "default_database",
+        "embedding_function_config": {
+          "function_type": "sentence_transformer",
+          "model_name": "all-MiniLM-L6-v2"
+        }
+      }
+    },
+    {
+      "type": "chroma_vector_memory",
+      "provider": "autogen_ext.memory.chromadb.ChromaDBVectorMemory",
+      "component_type": "memory",
+      "version": 1,
+      "component_version": 1,
+      "label": "ChromaDBVectorMemory",
+      "description": "Conversation history vector memory",
+      "write_enabled": true,
+      "config": {
+        "client_type": "persistent",
+        "persistence_path": "./data/vector_db/history/",
+        "collection_name": "conv_history",
+        "distance_metric": "cosine",
+        "k": 2,
+        "score_threshold": 0.5,
+        "allow_reset": false,
+        "tenant": "default_tenant",
+        "database": "default_database",
+        "embedding_function_config": {
+          "function_type": "openai_compatible",
+          "api_key_env": "DASHSCOPE_API_KEY",
+          "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+          "model": "text-embedding-v3"
+        }
+      }
+    }
+  ],
+  "mcp_servers": [
+    { "name": "Local File Saver", "config_ref": "local-file-saver" }
+  ],
+  "_autogen_version": "0.7.1"
+}

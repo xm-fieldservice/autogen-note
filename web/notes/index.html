@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PC 笔记页面（三库集成原型）</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- 左栏：议题（当前 / 归档 / 标签管理） -->
+    <aside class="sidebar">
+      <div class="tabs">
+        <button class="tab active" data-tab="current">当前议题</button>
+        <button class="tab" data-tab="archived">归档议题</button>
+        <button class="tab" data-tab="tags">标签</button>
+      </div>
+
+      <div class="tab-content" id="tab-current">
+        <ul id="topic-list-current" class="topic-list"></ul>
+        <button id="btn-add-topic" class="btn add">+ 新增议题</button>
+      </div>
+
+      <div class="tab-content hidden" id="tab-archived">
+        <ul id="topic-list-archived" class="topic-list"></ul>
+      </div>
+
+      <div class="tab-content hidden" id="tab-tags">
+        <div class="tags-panel">
+          <div class="tags-header">
+            <h4>标签管理</h4>
+            <div class="tag-actions">
+              <input id="input-new-tag" type="text" placeholder="新标签名" />
+              <button id="btn-add-tag" class="btn">新增标签</button>
+            </div>
+          </div>
+          <ul id="tag-list" class="tag-list"></ul>
+          <div class="tag-hint">多选标签后，议题列表按 AND 过滤；新建议题默认继承已选标签。</div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 中栏：输出（上）/输入（下） -->
+    <main class="main">
+      <div class="mode-bar">
+        <div class="modes">
+          <button class="mode-btn active" data-mode="note">笔记</button>
+          <button class="mode-btn" data-mode="search">检索</button>
+          <button class="mode-btn" data-mode="qa">问答</button>
+          <label class="switch">
+            <input type="checkbox" id="auto-mode" />
+            <span class="slider"></span>
+          </label>
+          <span class="switch-label">自动模式（默认关）</span>
+        </div>
+      </div>
+
+      <section class="output">
+        <div class="toolbar">
+          <span>输出 Markdown（可编辑）</span>
+          <div class="spacer"></div>
+          <button class="btn sm" id="btn-output-bold">B</button>
+          <button class="btn sm" id="btn-output-italic">I</button>
+          <button class="btn sm" id="btn-output-copy">复制全部</button>
+        </div>
+        <div id="output-feed" class="feed" aria-label="输出区（连续时间线，支持滚动浏览）"></div>
+      </section>
+
+      <section class="input">
+        <div class="toolbar">
+          <span>输入 Markdown</span>
+          <div class="spacer"></div>
+          <button class="btn sm" id="btn-input-bold">B</button>
+          <button class="btn sm" id="btn-input-italic">I</button>
+          <button class="btn sm" id="btn-input-copy">复制全部</button>
+          <button class="btn sm" id="btn-input-paste">粘贴</button>
+          <div class="picker-group">
+            <button id="btn-pick-agent" class="btn sm">选择 Agent</button>
+            <select id="recent-agents" class="recent-select" title="最近使用的 Agent">
+              <option value="">最近使用…</option>
+            </select>
+            <input type="file" id="agent-file" accept=".json" class="hidden" />
+          </div>
+          <div class="picker-group">
+            <button id="btn-pick-team" class="btn sm">选择 Team</button>
+            <select id="recent-teams" class="recent-select">
+              <option value="">最近使用…</option>
+            </select>
+            <input type="file" id="team-file" accept=".json" class="hidden" />
+          </div>
+        </div>
+        <textarea id="input-md" class="editor" placeholder="输入内容。Enter 换行；Shift+Enter 预处理；Alt+Enter 两步提交（预处理 → 落库/查询）"></textarea>
+        <div class="input-actions">
+          <label class="btn">
+            附件上传
+            <input type="file" id="file-upload" class="hidden" multiple />
+          </label>
+        </div>
+        <div class="hint">
+          快捷键：Enter=换行；Shift+Enter=预处理到输出；Alt+Enter=两步提交（第一次预处理、第二次落库/查询）。
+        </div>
+      </section>
+    </main>
+
+    <!-- 右栏：会话记录（笔记块） -->
+    <aside class="sessions">
+      <div class="sessions-header">
+        <h4>会话记录</h4>
+      </div>
+      <ul id="session-list" class="session-list"></ul>
+    </aside>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>

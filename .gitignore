@@ -23,3 +23,8 @@ dist/
 # IDE
 .vscode/
 .idea/
+
+# Project artifacts
+data/
+logs/
+migration-package-native.zip

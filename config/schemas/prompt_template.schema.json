@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "prompt_template",
+  "type": "object",
+  "properties": {
+    "schema": {"type": "integer"},
+    "id": {"type": "string"},
+    "locale": {"type": "string"},
+    "version": {"type": "string"},
+    "slots": {"type": "object"},
+    "content": {"type": "array"}
+  },
+  "required": ["schema", "id", "content"]
+}

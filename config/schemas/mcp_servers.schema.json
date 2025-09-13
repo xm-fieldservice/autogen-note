@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "mcp_servers",
+  "type": "object",
+  "properties": {
+    "schema": {"type": "integer"},
+    "servers": {"type": "array"}
+  },
+  "required": ["schema", "servers"]
+}

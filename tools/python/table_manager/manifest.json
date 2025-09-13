@@ -1,0 +1,409 @@
+{
+  "name": "table_manager",
+  "description": "结构化数据表管理工具集，支持表格CRUD操作、意图识别、向量搜索和数据分析",
+  "version": "1.0.0",
+  "author": "Windsurf Team",
+  "categories": ["data", "table", "management", "analysis"],
+  "tags": ["structured_data", "tables", "vector_search", "analytics"],
+  "tool_providers": [
+    {
+      "id": "table_tools",
+      "name": "表格管理工具",
+      "description": "用于管理结构化数据表的工具，支持查询、添加、更新和删除记录",
+      "class_path": "tools.python.table_manager.impl.TableToolProvider",
+      "parameters": {
+        "schema_dir": {
+          "type": "string",
+          "description": "表结构定义目录",
+          "default": "${WORKSPACE_ROOT}/data/schemas"
+        },
+        "data_dir": {
+          "type": "string",
+          "description": "表数据存储目录",
+          "default": "${WORKSPACE_ROOT}/data/tables"
+        }
+      },
+      "methods": [
+        {
+          "name": "list_tables",
+          "description": "列出所有可用的数据表",
+          "parameters": [],
+          "returns": {
+            "type": "array",
+            "description": "表格列表及其基本信息"
+          }
+        },
+        {
+          "name": "get_schema",
+          "description": "获取表结构定义",
+          "parameters": [
+            {
+              "name": "table_name",
+              "type": "string",
+              "description": "表名"
+            }
+          ],
+          "returns": {
+            "type": "object",
+            "description": "表结构定义字典"
+          }
+        },
+        {
+          "name": "query_table",
+          "description": "查询表数据",
+          "parameters": [
+            {
+              "name": "table_name",
+              "type": "string",
+              "description": "表名"
+            },
+            {
+              "name": "conditions",
+              "type": "object",
+              "description": "查询条件，键为字段名，值为查询值",
+              "optional": true
+            },
+            {
+              "name": "limit",
+              "type": "integer",
+              "description": "返回记录数限制",
+              "default": 100,
+              "optional": true
+            },
+            {
+              "name": "offset",
+              "type": "integer",
+              "description": "查询偏移量",
+              "default": 0,
+              "optional": true
+            },
+            {
+              "name": "sort_by",
+              "type": "string",
+              "description": "排序字段",
+              "optional": true
+            },
+            {
+              "name": "sort_order",
+              "type": "string",
+              "description": "排序方向，asc或desc",
+              "default": "asc",
+              "optional": true
+            }
+          ],
+          "returns": {
+            "type": "object",
+            "description": "查询结果，包含总记录数、当前页记录等"
+          }
+        },
+        {
+          "name": "get_record",
+          "description": "获取单条记录",
+          "parameters": [
+            {
+              "name": "table_name",
+              "type": "string",
+              "description": "表名"
+            },
+            {
+              "name": "record_id_field",
+              "type": "string",
+              "description": "记录ID字段名"
+            },
+            {
+              "name": "record_id",
+              "type": "string",
+              "description": "记录ID值"
+            }
+          ],
+          "returns": {
+            "type": "object",
+            "description": "记录数据"
+          }
+        },
+        {
+          "name": "update_table",
+          "description": "更新表记录",
+          "parameters": [
+            {
+              "name": "table_name",
+              "type": "string",
+              "description": "表名"
+            },
+            {
+              "name": "record_id_field",
+              "type": "string",
+              "description": "记录ID字段名"
+            },
+            {
+              "name": "record_id",
+              "type": "string",
+              "description": "记录ID值"
+            },
+            {
+              "name": "data",
+              "type": "object",
+              "description": "更新数据"
+            },
+            {
+              "name": "conversation_id",
+              "type": "string",
+              "description": "会话ID，用于审计",
+              "optional": true
+            }
+          ],
+          "returns": {
+            "type": "object",
+            "description": "更新结果"
+          }
+        },
+        {
+          "name": "add_record",
+          "description": "添加新记录",
+          "parameters": [
+            {
+              "name": "table_name",
+              "type": "string",
+              "description": "表名"
+            },
+            {
+              "name": "data",
+              "type": "object",
+              "description": "记录数据"
+            },
+            {
+              "name": "conversation_id",
+              "type": "string",
+              "description": "会话ID，用于审计",
+              "optional": true
+            }
+          ],
+          "returns": {
+            "type": "object",
+            "description": "添加结果"
+          }
+        },
+        {
+          "name": "delete_record",
+          "description": "删除记录",
+          "parameters": [
+            {
+              "name": "table_name",
+              "type": "string",
+              "description": "表名"
+            },
+            {
+              "name": "record_id_field",
+              "type": "string",
+              "description": "记录ID字段名"
+            },
+            {
+              "name": "record_id",
+              "type": "string",
+              "description": "记录ID值"
+            },
+            {
+              "name": "conversation_id",
+              "type": "string",
+              "description": "会话ID，用于审计",
+              "optional": true
+            }
+          ],
+          "returns": {
+            "type": "object",
+            "description": "删除结果"
+          }
+        },
+        {
+          "name": "create_table",
+          "description": "创建新表",
+          "parameters": [
+            {
+              "name": "table_name",
+              "type": "string",
+              "description": "表名"
+            },
+            {
+              "name": "schema",
+              "type": "object",
+              "description": "表结构定义"
+            }
+          ],
+          "returns": {
+            "type": "object",
+            "description": "创建结果"
+          }
+        }
+      ]
+    },
+    {
+      "id": "intent_processor",
+      "name": "意图处理工具",
+      "description": "处理自然语言意图并转换为结构化命令",
+      "class_path": "tools.python.table_manager.intent_processor.IntentProcessorTool",
+      "parameters": {},
+      "methods": [
+        {
+          "name": "extract_intent",
+          "description": "从用户查询中提取意图",
+          "parameters": [
+            {
+              "name": "query",
+              "type": "string",
+              "description": "用户查询文本"
+            }
+          ],
+          "returns": {
+            "type": "object",
+            "description": "提取的意图信息"
+          }
+        },
+        {
+          "name": "analyze_structured_command",
+          "description": "分析结构化命令",
+          "parameters": [
+            {
+              "name": "command",
+              "type": "string",
+              "description": "结构化命令字符串，通常是JSON格式"
+            }
+          ],
+          "returns": {
+            "type": "object",
+            "description": "解析后的命令结构"
+          }
+        },
+        {
+          "name": "generate_structured_command",
+          "description": "根据意图生成结构化命令",
+          "parameters": [
+            {
+              "name": "intent",
+              "type": "object",
+              "description": "意图信息"
+            }
+          ],
+          "returns": {
+            "type": "object",
+            "description": "生成的结构化命令"
+          }
+        }
+      ]
+    },
+    {
+      "id": "table_analytics",
+      "name": "表数据分析工具",
+      "description": "分析表数据并提供统计和洞察",
+      "class_path": "tools.python.table_manager.analytics.TableAnalytics",
+      "parameters": {
+        "data_dir": {
+          "type": "string",
+          "description": "表数据存储目录",
+          "default": "${WORKSPACE_ROOT}/data/tables"
+        }
+      },
+      "methods": [
+        {
+          "name": "get_summary_statistics",
+          "description": "获取表数据统计摘要",
+          "parameters": [
+            {
+              "name": "table_name",
+              "type": "string",
+              "description": "表名"
+            }
+          ],
+          "returns": {
+            "type": "object",
+            "description": "数据统计摘要"
+          }
+        },
+        {
+          "name": "get_group_statistics",
+          "description": "获取分组统计",
+          "parameters": [
+            {
+              "name": "table_name",
+              "type": "string",
+              "description": "表名"
+            },
+            {
+              "name": "group_by",
+              "type": "string",
+              "description": "分组列名"
+            },
+            {
+              "name": "measure_columns",
+              "type": "array",
+              "description": "度量列名列表",
+              "optional": true
+            },
+            {
+              "name": "aggregations",
+              "type": "array",
+              "description": "聚合方法列表",
+              "optional": true
+            }
+          ],
+          "returns": {
+            "type": "object",
+            "description": "分组统计结果"
+          }
+        },
+        {
+          "name": "get_correlation_matrix",
+          "description": "获取相关性矩阵",
+          "parameters": [
+            {
+              "name": "table_name",
+              "type": "string",
+              "description": "表名"
+            },
+            {
+              "name": "columns",
+              "type": "array",
+              "description": "要计算相关性的列名列表",
+              "optional": true
+            }
+          ],
+          "returns": {
+            "type": "object",
+            "description": "相关性矩阵结果"
+          }
+        },
+        {
+          "name": "get_time_series_analysis",
+          "description": "获取时间序列分析",
+          "parameters": [
+            {
+              "name": "table_name",
+              "type": "string",
+              "description": "表名"
+            },
+            {
+              "name": "date_column",
+              "type": "string",
+              "description": "日期列名"
+            },
+            {
+              "name": "value_column",
+              "type": "string",
+              "description": "值列名"
+            },
+            {
+              "name": "frequency",
+              "type": "string",
+              "description": "重采样频率，默认为月(M)",
+              "default": "M",
+              "optional": true
+            }
+          ],
+          "returns": {
+            "type": "object",
+            "description": "时间序列分析结果"
+          }
+        }
+      ]
+    }
+  ]
+}

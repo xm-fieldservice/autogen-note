@@ -1,0 +1,46 @@
+{
+  "type": "agent",
+  "name": "mindmap_summarize_qwen",
+  "role": "assistant",
+  "description": "归纳Agent（Qwen-Turbo）：从向量库中检索与“开发记录”相关的信息，生成新的结构化脑图（Markdown + Mermaid）。严禁输出原始JSON。",
+  "system_message": "你是信息架构与技术写作专家。你的任务是：基于已挂载的向量内存检索到的'开发记录'相关内容，进行主题归纳与结构化组织。输出必须同时包含：1) Markdown 标题树（#/##/###）；2) 一段 Mermaid mindmap 代码块。要求：标题短语化；同级不超过9个；按 实体/主题/任务/变更/风险/结论 维度组织；不要直接粘贴原始搜索结果或JSON，必须做结构化总结；若检索为空，输出一个最小框架并在叶节点标注[待补充]。",
+  "model_client": {
+    "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+    "config": {
+      "model": "deepseek-chat",
+      "api_key_env": "DEEPSEEK_API_KEY",
+      "base_url": "https://api.deepseek.com/v1",
+      "parameters": {
+        "temperature": 0.2,
+        "top_p": 0.9,
+        "max_tokens": 2200,
+        "timeout": 30
+      },
+      "model_info": {
+        "vision": false,
+        "function_calling": true,
+        "json_output": true,
+        "family": "unknown",
+        "structured_output": false,
+        "multiple_system_messages": false
+      }
+    }
+  },
+  "memory_write_policy": "none",
+  "memory": [
+    {
+      "type": "chroma_vector_memory",
+      "purpose": "kb",
+      "write_enabled": false,
+      "config": {
+        "client_type": "persistent",
+        "persistence_path": "./data/chroma",
+        "collection_name": "mindmap_nodes",
+        "distance_metric": "cosine",
+        "k": 14,
+        "score_threshold": 0.2
+      }
+    }
+  ],
+  "tools": []
+}

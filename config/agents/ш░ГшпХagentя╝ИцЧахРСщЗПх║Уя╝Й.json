@@ -1,0 +1,43 @@
+{
+  "_autogen_version": "0.6.2",
+  "_config_path": "D:/AI-Projects/desktop_app/config/agents/调试agent（无向量库）.json",
+  "_memory_backup": {
+    "memory": {
+      "teachability": false
+    }
+  },
+  "agent_type": "助手型代理（AssistantAgent）",
+  "memory": [],
+  "memory_write_policy": "none",
+  "model_client": {
+    "config": {
+      "api_key_env": "DASHSCOPE_API_KEY",
+      "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+      "model": "qwen-turbo-latest",
+      "model_info": {
+        "api_type": "openai",
+        "family": "qwen",
+        "function_calling": true,
+        "json_output": true,
+        "organization": null,
+        "structured_output": false,
+        "timeout": null,
+        "vision": false
+      },
+      "parameters": {
+        "frequency_penalty": 0.0,
+        "max_tokens": 1024,
+        "presence_penalty": 0.0,
+        "temperature": 0.7,
+        "timeout": 60,
+        "top_p": 0.95
+      }
+    },
+    "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient"
+  },
+  "name": "调试agent（无向量库）",
+  "role": "assistant",
+  "system_message": "",
+  "tools": [],
+  "type": "agent"
+}

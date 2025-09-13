@@ -1,0 +1,32 @@
+{
+  "schema": 1,
+  "id": "vector.chroma.search",
+  "type": "python",
+  "version": "0.1.0",
+  "title": "Chroma 向量检索",
+  "description": "基于 Chroma 的向量检索，优先使用 autogen-ext 内生封装，回退到原生 chromadb。支持参数化选择集合与检索参数。",
+  "doc_url": "https://docs.trychroma.com/",
+  "source": "local",
+  "last_verified": "",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "query": {"type": "string", "description": "查询文本"},
+      "collection_name": {"type": "string", "nullable": true, "description": "Chroma 集合名，默认 agent_default 或环境变量 VECTOR_COLLECTION"},
+      "persistence_path": {"type": "string", "nullable": true, "description": "Chroma 持久化路径，默认 data/chroma 或环境变量 VECTOR_PATH"},
+      "k": {"type": "integer", "minimum": 1, "maximum": 50, "default": 5},
+      "score_threshold": {"type": "number", "minimum": 0, "maximum": 1, "default": 0.0}
+    },
+    "required": ["query"]
+  },
+  "runtime": {
+    "module": "tools.python.vector.chroma.search.impl",
+    "callable": "run"
+  },
+  "sandbox": {
+    "working_dir": ".",
+    "env_whitelist": ["VECTOR_COLLECTION", "VECTOR_PATH", "EMBEDDING_MODEL"],
+    "allow_network": false,
+    "timeout": 60
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "provider": "autogen_agentchat.agents.AssistantAgent",
+  "component_type": "agent",
+  "version": 2,
+  "component_version": 2,
+  "label": "test",
+  "config": {
+    "name": "test",
+    "system_message": "你是一名结构化信息整理助手。你的唯一任务是：对用户输入的原始内容进行结构化的清理、归纳与重写，输出为一份清晰、可直接入库的 Markdown。必须遵循以下硬性规则：\\n\\n1) 仅输出整理后的内容，不要输出任何额外解释或对话，不要包含系统提示或思考过程。\\n2) 保留用户关键信息，去除冗余、口头语、噪点，错别字；可以适当补全标题与小结，对于逻辑和语法上有明显不通顺的地方可以不全或者补齐；但不得杜撰事实。\\n3) 输出格式固定为：\\n   - 顶部总标题：# 结果整理\\n   - 基本信息（如能识别）：主题/时间/标签\\n   - 结构化正文：分级标题、要点列表、步骤/决策/结论\\n   - 行动项（可选）：勾选清单\\n   - 参考与附录（可选）\\n4) Markdown 语法要求：\\n   - 标题从 H1 开始，逐级递进，不要跳级\\n   - 列表使用 - 或 1. 统一风格\\n   - 代码、配置或多行引用使用合适的围栏（```）\\n5) 若输入是问答/讨论片段，请先“摘出要点”，再做“结构化重写”；若输入是任务/待办，请输出“可执行步骤”与“验收标准”。\\n6) 禁止输出原始 JSON、禁止输出思维链、禁止输出私有系统变量；仅允许 Markdown。\\n\\n输出模板参考（严格参照，但可按上下文裁剪）：\\n\\n# 结果整理\\n\\n## 基本信息\\n- 主题：<自动识别或留空>\\n- 时间：<自动识别或留空>\\n- 标签：<#标签1> <#标签2>\\n\\n## 摘要\\n- <3~5 条要点>\\n\\n## 正文\\n### 背景\\n- <要点>\\n\\n### 现状/问题\\n- <要点>\\n\\n### 方案/决策\\n- <要点>\\n\\n### 风险与依赖\\n- <要点>\\n\\n## 行动项（如适用）\\n- [ ] 任务A：<负责人>/<截止>\\n- [ ] 任务B：<负责人>/<截止>\\n\\n## 参考与附录（可选）\\n- <链接或原文片段>\\n\\n若输入极短/无法识别上下文，也需输出“# 结果整理”与至少一个要点列表。\",",
+    "model_client_stream": false,
+    "reflect_on_tool_use": false,
+    "tool_call_summary_format": "{result}",
+    "max_tool_iterations": 2,
+    "description": "你是一名结构化信息整理助手",
+    "model_client": {
+      "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+      "component_type": "model",
+      "version": 1,
+      "component_version": 1,
+      "description": "Chat completion client",
+      "label": "OpenAIChatCompletionClient",
+      "config": {
+        "model": "qwen-turbo-latest",
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+        "model_info": {
+          "family": "qwen",
+          "vision": false,
+          "function_calling": true,
+          "json_output": true,
+          "structured_output": false
+        },
+        "temperature": 0.7,
+        "max_tokens": 4096,
+        "timeout": 30,
+        "api_key_env": "DASHSCOPE_API_KEY"
+      }
+    }
+  }
+}

@@ -1,0 +1,56 @@
+{
+  "provider": "autogen_agentchat.teams.RoundRobinGroupChat",
+  "component_type": "team",
+  "version": 1,
+  "component_version": 1,
+  "description": "交互演示团队",
+  "label": "demo-team-interactive",
+  "config": {
+    "name": "demo-team-interactive",
+    "description": "演示：最小可交互Team（单助手）",
+    "participants": [
+      {
+        "provider": "autogen_agentchat.agents.AssistantAgent",
+        "component_type": "agent",
+        "version": 1,
+        "component_version": 1,
+        "config": {
+          "name": "assistant",
+          "description": "简洁回答助手",
+          "system_message": "只输出简洁、直接的回答；如任务要求特定格式，严格遵循；禁止输出无关解释。",
+          "model_client": {
+            "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+            "component_type": "model",
+            "version": 1,
+            "component_version": 1,
+            "config": {
+              "model": "deepseek-reasoner",
+              "api_key_env": "DEEPSEEK_API_KEY",
+              "base_url": "https://api.deepseek.com/v1",
+              "model_info": {
+                "api_type": "openai",
+                "family": "deepseek",
+                "vision": false,
+                "function_calling": true,
+                "json_output": false,
+                "structured_output": false,
+                "organization": null,
+                "timeout": 25
+              },
+              "parameters": {
+                "temperature": 0.2,
+                "top_p": 0.9,
+                "max_tokens": 256,
+                "timeout": 25
+              }
+            }
+          },
+          "memory": []
+        }
+      }
+    ],
+    "termination_condition": null,
+    "max_turns": 1,
+    "emit_team_events": false
+  }
+}

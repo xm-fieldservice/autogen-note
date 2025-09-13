@@ -1,0 +1,39 @@
+{
+  "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+  "component_type": "model",
+  "config": {
+    "model": "qwen2.5-vl-72b-instruct",
+    "api_key_env": "DASHSCOPE_API_KEY",
+    "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    "model_info": {
+      "api_type": "openai",
+      "family": "qwen",
+      "vision": true,
+      "function_calling": true,
+      "json_output": true,
+      "organization": null,
+      "timeout": null,
+      "multimodal": {
+        "image_resolution": 448,
+        "ocr_capabilities": [
+          "text",
+          "tables",
+          "charts",
+          "handwriting"
+        ],
+        "document_parsing": "qwenvl_html",
+        "visual_grounding": true
+      }
+    },
+    "parameters": {
+      "temperature": 0.7,
+      "max_tokens": 4096,
+      "timeout": 30
+    },
+    "stop": [
+      "stop_sequences: [\"\\n\"]"
+    ]
+  },
+  "label": "qwen2.5-vl-72b-instruct",
+  "description": "阿里云视觉语言模型Qwen2.5-VL-72b-instruct，支持高级OCR、文档解析和视觉定位功能"
+}

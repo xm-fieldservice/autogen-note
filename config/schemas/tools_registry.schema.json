@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "tools_registry",
+  "type": "object",
+  "properties": {
+    "schema": {"type": "integer"},
+    "tools": {"type": "array"}
+  },
+  "required": ["schema", "tools"]
+}

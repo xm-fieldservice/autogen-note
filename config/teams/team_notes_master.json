@@ -1,0 +1,140 @@
+{
+  "type": "team",
+  "name": "笔记主力（Router/NoteWriter/QARAG）",
+  "members": [
+    {
+      "type": "agent",
+      "name": "Router",
+      "role": "assistant",
+      "system_message": "你是一个意图判别路由器，只输出 JSON，不输出解释。\n任务：判断用户输入属于 'note'（记录/补充/备忘/总结/进展 等）还是 'qa'（问题/查询/请解释/比较/如何/为什么/怎么办 等）。\n请严格输出：{\"route\": \"note|qa\", \"confidence\": 0.0~1.0, \"reason\": \"简短中文理由\"}\n不要输出除 JSON 外的任何内容。",
+      "model_client": {
+        "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+        "config": {
+          "model": "qwen-turbo-latest",
+          "api_key_env": "DASHSCOPE_API_KEY",
+          "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+          "model_info": {
+            "api_type": "openai",
+            "family": "qwen",
+            "vision": false,
+            "function_calling": true,
+            "json_output": true,
+            "structured_output": false,
+            "organization": null,
+            "timeout": null
+          },
+          "parameters": {
+            "temperature": 0.1,
+            "max_tokens": 256,
+            "timeout": 20
+          }
+        }
+      },
+      "memory": []
+    },
+    {
+      "type": "agent",
+      "name": "NoteWriter",
+      "role": "assistant",
+      "system_message": "你是笔记规范化助手。只做保真清洗：纠错、标点与句界、术语统一、能确定时解析相对时间；禁止新增事实或主观推断。输出规范化文本或结构化要点，不需冗长解释。",
+      "model_client": {
+        "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+        "config": {
+          "model": "qwen-turbo-latest",
+          "api_key_env": "DASHSCOPE_API_KEY",
+          "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+          "model_info": {
+            "api_type": "openai",
+            "family": "qwen",
+            "vision": false,
+            "function_calling": true,
+            "json_output": true,
+            "structured_output": false,
+            "organization": null,
+            "timeout": null
+          },
+          "parameters": {
+            "temperature": 0.2,
+            "max_tokens": 512,
+            "timeout": 30
+          }
+        }
+      },
+      "memory_write_policy": "qa_user_only",
+      "memory": [
+        {
+          "type": "chroma_vector_memory",
+          "provider": "autogen_ext.memory.chromadb.ChromaDBVectorMemory",
+          "component_type": "memory",
+          "config": {
+            "client_type": "persistent",
+            "persistence_path": "./data/autogen_official_memory/vector_demo/",
+            "collection_name": "vector_demo_assistant",
+            "distance_metric": "cosine",
+            "k": 8,
+            "score_threshold": 0.1,
+            "embedding_function_config": {
+              "function_type": "sentence_transformer",
+              "model_name": "all-MiniLM-L6-v2"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "agent",
+      "name": "QARAG",
+      "role": "assistant",
+      "system_message": "你是RAG问答助手。优先使用向量记忆片段作答，未命中再推理；回答简洁、准确，并在必要时说明'未命中记忆'。",
+      "model_client": {
+        "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+        "config": {
+          "model": "qwen-turbo-latest",
+          "api_key_env": "DASHSCOPE_API_KEY",
+          "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+          "model_info": {
+            "api_type": "openai",
+            "family": "qwen",
+            "vision": false,
+            "function_calling": true,
+            "json_output": true,
+            "structured_output": false,
+            "organization": null,
+            "timeout": null
+          },
+          "parameters": {
+            "temperature": 0.7,
+            "max_tokens": 4096,
+            "timeout": 30
+          }
+        }
+      },
+      "memory_write_policy": "qa_both",
+      "memory": [
+        {
+          "type": "chroma_vector_memory",
+          "provider": "autogen_ext.memory.chromadb.ChromaDBVectorMemory",
+          "component_type": "memory",
+          "config": {
+            "client_type": "persistent",
+            "persistence_path": "./data/autogen_official_memory/vector_demo/",
+            "collection_name": "vector_demo_assistant",
+            "distance_metric": "cosine",
+            "k": 8,
+            "score_threshold": 0.1,
+            "embedding_function_config": {
+              "function_type": "sentence_transformer",
+              "model_name": "all-MiniLM-L6-v2"
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "orchestrator": {
+    "strategy": "round_robin",
+    "max_turns": 2
+  },
+  "max_rounds": 2,
+  "_autogen_version": "0.7.1"
+}

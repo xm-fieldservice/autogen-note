@@ -1,0 +1,37 @@
+{
+  "status_code": 200,
+  "ok": true,
+  "data": {
+    "choices": [
+      {
+        "message": {
+          "content": "我是来自阿里云的大规模语言模型，我叫通义千问。",
+          "role": "assistant"
+        },
+        "finish_reason": "stop",
+        "index": 0,
+        "logprobs": null
+      }
+    ],
+    "object": "chat.completion",
+    "usage": {
+      "prompt_tokens": 21,
+      "completion_tokens": 17,
+      "total_tokens": 38,
+      "completion_tokens_details": {
+        "text_tokens": 17
+      },
+      "prompt_tokens_details": {
+        "text_tokens": 21
+      }
+    },
+    "created": 1754921056,
+    "system_fingerprint": null,
+    "model": "qwen2.5-vl-72b-instruct",
+    "id": "chatcmpl-63a1f5e9-a47e-992f-9f2b-100a06581c37"
+  },
+  "text": "我是来自阿里云的大规模语言模型，我叫通义千问。",
+  "started_at": "2025-08-11T14:04:14.260975+00:00",
+  "ended_at": "2025-08-11T14:04:15.571322+00:00",
+  "duration_ms": 1309
+}

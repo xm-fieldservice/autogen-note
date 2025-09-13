@@ -1,0 +1,36 @@
+{
+  "type": "agent",
+  "name": "mindmap_ingest",
+  "role": "assistant",
+  "description": "脑图灌注代理：承载内生 Memory，向集合 mindmap_nodes 写入带有 mindmap 渠道标记的节点。",
+  "system_message": "This agent is used for mindmap ingestion only. It does not perform chat.",
+  "model_client": {
+    "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+    "config": {
+      "model": "deepseek-chat",
+      "api_key_env": "DEEPSEEK_API_KEY",
+      "base_url": "https://api.deepseek.com/v1",
+      "parameters": {
+        "timeout": 30,
+        "max_tokens": 512
+      }
+    }
+  },
+  "memory_write_policy": "allow",
+  "memory": [
+    {
+      "type": "chroma_vector_memory",
+      "purpose": "note",
+      "write_enabled": true,
+      "config": {
+        "client_type": "persistent",
+        "persistence_path": "./data/chroma",
+        "collection_name": "mindmap_nodes",
+        "distance_metric": "cosine",
+        "k": 5,
+        "score_threshold": 0.0
+      }
+    }
+  ],
+  "tools": []
+}

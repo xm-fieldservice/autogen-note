@@ -1,0 +1,38 @@
+{
+  "type": "team",
+  "name": "demo-team-interactive",
+  "max_rounds": 1,
+  "members": [
+    {
+      "type": "agent",
+      "name": "assistant",
+      "system_message": "只输出简洁、直接的回答；如任务要求特定格式，严格遵循；禁止输出无关解释。",
+      "model_client": {
+        "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+        "config": {
+          "model": "qwen-turbo-latest",
+          "api_key_env": "DASHSCOPE_API_KEY",
+          "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+          "model_info": {
+            "api_type": "openai",
+            "family": "qwen",
+            "vision": false,
+            "function_calling": true,
+            "json_output": true,
+            "structured_output": false,
+            "organization": null,
+            "timeout": null
+          },
+          "parameters": {
+            "temperature": 0.2,
+            "top_p": 1,
+            "max_tokens": 256,
+            "timeout": 30
+          }
+        }
+      },
+      "tools": [],
+      "memory": []
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "schema": 1,
+  "servers": [
+    {
+      "id": "local-file-saver",
+      "name": "Local File Saver",
+      "command": "python",
+      "args": [
+        "tools/python/mcp/local_file_saver.py"
+      ],
+      "env": {},
+      "autoStart": true,
+      "disabled": false
+    },
+    {
+      "id": "document-ingestion",
+      "name": "Document Ingestion",
+      "command": "python",
+      "args": [
+        "tools/python/mcp/document_ingestion_server.py"
+      ],
+      "env": {},
+      "autoStart": true,
+      "disabled": false
+    },
+    {
+      "id": "rdbms-generic",
+      "name": "RDBMS Generic (placeholder)",
+      "command": "python",
+      "args": [
+        "tools/python/mcp/db_mcp_server.py"
+      ],
+      "env": {
+        "RDBMS_DSN_ENV": "RDBMS_DSN_DEV",
+        "DB_TYPE": "sqlite"
+      },
+      "autoStart": true,
+      "disabled": false
+    }
+  ]
+}

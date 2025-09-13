@@ -1,0 +1,13 @@
+{
+  "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+  "component_type": "model",
+  "description": "占位模型配置：脑图灌注代理用（通常不触发推理，仅保持结构一致性）",
+  "config": {
+    "model": "deepseek-chat",
+    "api_key": "${DEEPSEEK_API_KEY}",
+    "base_url": "https://api.deepseek.com/v1",
+    "timeout": 30.0,
+    "max_retries": 2,
+    "max_tokens": 512
+  }
+}

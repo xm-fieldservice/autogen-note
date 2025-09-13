@@ -1,0 +1,50 @@
+{
+  "provider": "autogen_agentchat.agents.AssistantAgent",
+  "component_type": "agent",
+  "version": 2,
+  "component_version": 2,
+  "label": "kimi",
+  "config": {
+    "name": "kimi",
+    "system_message": "You are a helpful assistant.\n\n【重要约束】你必须调用工具或使用结构化输出格式回答。",
+    "model_client_stream": false,
+    "reflect_on_tool_use": false,
+    "tool_call_summary_format": "{result}",
+    "max_tool_iterations": 2,
+    "description": "An agent that provides assistance with ability to use tools.",
+    "model_client": {
+      "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+      "component_type": "model",
+      "version": 1,
+      "component_version": 1,
+      "description": "Chat completion client",
+      "label": "OpenAIChatCompletionClient",
+      "config": {
+        "model": "kimi-k2-0711-preview",
+        "base_url": "https://api.moonshot.cn/v1",
+        "timeout": 30.0,
+        "max_tokens": 2048,
+        "temperature": 0.7,
+        "top_p": 0.9,
+        "model_info": {
+          "vision": false,
+          "function_calling": true,
+          "json_output": true,
+          "family": "unknown",
+          "structured_output": false,
+          "multiple_system_messages": false
+        },
+        "api_key": "${MOONSHOT_API_KEY}"
+      }
+    },
+    "model_context": {
+      "provider": "autogen_core.model_context.UnboundedChatCompletionContext",
+      "component_type": "chat_completion_context",
+      "version": 1,
+      "component_version": 1,
+      "description": "An unbounded chat completion context that keeps a view of the all the messages.",
+      "label": "UnboundedChatCompletionContext",
+      "config": {}
+    }
+  }
+}

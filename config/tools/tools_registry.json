@@ -1,0 +1,47 @@
+{
+  "schema": 1,
+  "tools": [
+    {
+      "id": "google.search",
+      "type": "python",
+      "version": "0.1.0",
+      "title": "Google Custom Search",
+      "status": "封装"
+    },
+    {
+      "id": "bing.search",
+      "type": "python",
+      "version": "0.1.0",
+      "title": "Bing Web Search",
+      "status": "封装"
+    },
+    {
+      "id": "playwright",
+      "type": "python",
+      "version": "1.0.0",
+      "title": "Playwright网页自动化",
+      "status": "封装"
+    },
+    {
+      "id": "multimodal_web_surfer",
+      "type": "python",
+      "version": "1.0.0",
+      "title": "MultimodalWebSurfer多模态网页浏览",
+      "status": "封装"
+    },
+    {
+      "id": "playwright_recorder",
+      "type": "python",
+      "version": "1.0.0",
+      "title": "Playwright录制器",
+      "status": "封装"
+    },
+    {
+      "id": "table_manager",
+      "type": "python",
+      "version": "1.0.0",
+      "title": "结构化数据表管理工具",
+      "status": "封装"
+    }
+  ]
+}

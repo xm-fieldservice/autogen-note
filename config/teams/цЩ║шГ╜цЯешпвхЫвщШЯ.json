@@ -1,0 +1,58 @@
+{
+  "provider": "autogen_agentchat.teams.RoundRobinGroupChat",
+  "component_type": "team",
+  "version": 1,
+  "component_version": 1,
+  "description": "智能网络查询团队 - 基于工具配置的高效查询方案",
+  "label": "smart-query-team",
+  "config": {
+    "name": "smart-query-team",
+    "description": "智能网络查询团队：使用增强工具进行深度网络内容分析",
+    "participants": [
+      {
+        "provider": "autogen_agentchat.agents.AssistantAgent",
+        "component_type": "agent",
+        "version": 1,
+        "component_version": 1,
+        "config": {
+          "name": "智能查询助手",
+          "description": "配备增强网络查询工具的智能助手",
+          "system_message": "你是一个智能网络查询助手，专门负责获取网页内容并提供结构化答案。\n\n【核心能力】\n1. 使用enhanced_web_query工具进行混合策略网页抓取\n2. 基于实际网页内容生成结构化答案\n3. 提供权威来源和详细分析\n\n【答案格式】严格按照以下结构输出：\n\n## 📋 查询结果\n\n### 🎯 核心答案\n[基于网页内容提取的直接答案]\n\n### 📝 详细说明\n[补充信息和背景，基于实际网页内容]\n\n### 🔗 权威来源\n1. **[网站名称]** - [核心信息摘要]\n   - 链接：[URL]\n   - 抓取方式：[requests/playwright]\n   - 内容要点：[关键信息]\n\n### 💡 技术统计\n- 总搜索结果：X条\n- 成功抓取：X条\n- 抓取方式：requests(X) + playwright(X)\n\n【处理原则】\n- 优先使用enhanced_web_query获取完整内容\n- 基于真实网页内容而非搜索片段\n- 严禁输出原始JSON格式\n- 提供抓取方式统计信息",
+          "model_client": {
+            "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+            "component_type": "model",
+            "version": 1,
+            "component_version": 1,
+            "config": {
+              "model": "qwen-turbo-latest",
+              "api_key_env": "DASHSCOPE_API_KEY",
+              "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+              "model_info": {
+                "api_type": "openai",
+                "family": "qwen",
+                "vision": false,
+                "function_calling": true,
+                "json_output": false
+              },
+              "parameters": {
+                "temperature": 0.7,
+                "max_tokens": 4096,
+                "timeout": 120
+              }
+            }
+          },
+          "tools": [
+            {
+              "provider": "tools.python.smart_web_query.enhanced_adapter",
+              "config": {}
+            }
+          ],
+          "memory": []
+        }
+      }
+    ],
+    "termination_condition": null,
+    "max_turns": 5,
+    "emit_team_events": true
+  }
+}

@@ -1,0 +1,28 @@
+# ChromaDB 向量数据库配置
+# 用于Docker Compose环境
+
+# 服务器配置
+server:
+  host: "0.0.0.0"
+  port: 8000
+  cors_allow_origins: ["*"]
+
+# 持久化配置
+persist_directory: "/chroma/data"
+
+# 认证配置（可选）
+# auth:
+#   enabled: false
+
+# 日志配置
+logging:
+  level: "INFO"
+  
+# 集合配置
+collections:
+  default_embedding_function: "sentence-transformers/all-MiniLM-L6-v2"
+  
+# 性能配置
+performance:
+  max_batch_size: 1000
+  embedding_cache_size: 1000

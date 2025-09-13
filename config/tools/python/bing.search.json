@@ -1,0 +1,31 @@
+{
+  "schema": 1,
+  "id": "bing.search",
+  "type": "python",
+  "version": "0.1.0",
+  "title": "Bing Web Search",
+  "description": "使用 Azure Cognitive Services 的 Bing Web Search API 进行网页搜索。需要 BING_SEARCH_KEY。",
+  "doc_url": "https://learn.microsoft.com/azure/cognitive-services/bing-web-search/overview",
+  "source": "local",
+  "last_verified": "",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "query": {"type": "string", "description": "查询关键词"},
+      "count": {"type": "integer", "minimum": 1, "maximum": 50, "default": 5},
+      "mkt": {"type": "string", "default": "zh-CN"},
+      "safe": {"type": "string", "enum": ["Off", "Moderate", "Strict"], "default": "Moderate"}
+    },
+    "required": ["query"]
+  },
+  "runtime": {
+    "module": "tools.python.bing.search.impl",
+    "callable": "run"
+  },
+  "sandbox": {
+    "working_dir": ".",
+    "env_whitelist": ["BING_SEARCH_KEY", "BING_ENDPOINT"],
+    "allow_network": true,
+    "timeout": 60
+  }
+}

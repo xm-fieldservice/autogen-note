@@ -1,0 +1,182 @@
+{
+  "provider": "autogen_agentchat.teams.RoundRobinGroupChat",
+  "component_type": "team",
+  "version": 1,
+  "component_version": 1,
+  "description": "三库联合检索与聚合（DB/Vector/GraphRAG + Aggregator + Reviewer）",
+  "label": "mindmap-tri-store-team",
+  "config": {
+    "name": "mindmap-tri-store-team",
+    "description": "通过多参与者分工联合使用关系库、向量库与GraphRAG进行检索与结构化归纳。",
+    "participants": [
+      {
+        "provider": "autogen_agentchat.agents.AssistantAgent",
+        "component_type": "agent",
+        "version": 1,
+        "component_version": 1,
+        "config": {
+          "name": "DB-Retriever",
+          "description": "使用数据库工具进行精确结构化查询（MCP）",
+          "system_message": "你负责访问关系数据库，基于‘共享元数据契约’进行精准检索，返回结构化要点，不得回贴原始JSON。",
+          "model_client": {
+            "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+            "component_type": "model",
+            "version": 1,
+            "component_version": 1,
+            "config": {
+              "model": "qwen-turbo-latest",
+              "api_key_env": "DASHSCOPE_API_KEY",
+              "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+              "model_info": {
+                "api_type": "openai",
+                "family": "qwen",
+                "vision": false,
+                "function_calling": true,
+                "json_output": false
+              },
+              "parameters": { "temperature": 0.2, "timeout": 120 }
+            }
+          },
+          "tools": [
+            {
+              "provider": "tools.python.mcp.rdbms_generic",
+              "config": { "server_id": "rdbms-generic" }
+            }
+          ],
+          "memory": []
+        }
+      },
+      {
+        "provider": "autogen_agentchat.agents.AssistantAgent",
+        "component_type": "agent",
+        "version": 1,
+        "component_version": 1,
+        "config": {
+          "name": "Vector-Retriever",
+          "description": "从向量库进行语义检索（memory.config 控制 k/threshold）",
+          "system_message": "你负责从向量库召回与主题相关的节点，严格依据内生 memory 配置生成要点，不得回贴原始JSON。",
+          "model_client": {
+            "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+            "component_type": "model",
+            "version": 1,
+            "component_version": 1,
+            "config": {
+              "model": "qwen-turbo-latest",
+              "api_key_env": "DASHSCOPE_API_KEY",
+              "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+              "model_info": {
+                "api_type": "openai",
+                "family": "qwen",
+                "vision": false,
+                "function_calling": true,
+                "json_output": false
+              },
+              "parameters": { "temperature": 0.2, "timeout": 120 }
+            }
+          },
+          "tools": [],
+          "memory": []
+        }
+      },
+      {
+        "provider": "autogen_agentchat.agents.AssistantAgent",
+        "component_type": "agent",
+        "version": 1,
+        "component_version": 1,
+        "config": {
+          "name": "GraphRAG-Retriever",
+          "description": "使用 GraphRAG 进行图谱检索（settings.yaml 存在即启用）",
+          "system_message": "你负责在启用时通过 GraphRAG 检索标签与关系信息，并产出结构化要点，不得回贴原始JSON。",
+          "model_client": {
+            "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+            "component_type": "model",
+            "version": 1,
+            "component_version": 1,
+            "config": {
+              "model": "qwen-turbo-latest",
+              "api_key_env": "DASHSCOPE_API_KEY",
+              "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+              "model_info": {
+                "api_type": "openai",
+                "family": "qwen",
+                "vision": false,
+                "function_calling": true,
+                "json_output": false
+              },
+              "parameters": { "temperature": 0.2, "timeout": 120 }
+            }
+          },
+          "tools": [],
+          "memory": []
+        }
+      },
+      {
+        "provider": "autogen_agentchat.agents.AssistantAgent",
+        "component_type": "agent",
+        "version": 1,
+        "component_version": 1,
+        "config": {
+          "name": "Aggregator",
+          "description": "合并多源要点并统一输出（Markdown 标题树 + Mermaid）",
+          "system_message": "你负责聚合来自 DB/Vector/GraphRAG 的要点，输出严格结构化的结果：\n- 禁止输出原始JSON\n- 必须包含：标题树（Markdown）与可选的Mermaid关系图\n- 若任一来源为空，需标注空来源并继续输出",
+          "model_client": {
+            "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+            "component_type": "model",
+            "version": 1,
+            "component_version": 1,
+            "config": {
+              "model": "qwen-turbo-latest",
+              "api_key_env": "DASHSCOPE_API_KEY",
+              "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+              "model_info": {
+                "api_type": "openai",
+                "family": "qwen",
+                "vision": false,
+                "function_calling": true,
+                "json_output": false
+              },
+              "parameters": { "temperature": 0.3, "timeout": 180 }
+            }
+          },
+          "tools": [],
+          "memory": []
+        }
+      },
+      {
+        "provider": "autogen_agentchat.agents.AssistantAgent",
+        "component_type": "agent",
+        "version": 1,
+        "component_version": 1,
+        "config": {
+          "name": "Reviewer",
+          "description": "校验结构化合规，禁止原始JSON穿透",
+          "system_message": "你负责对最终输出进行合规检查：\n- 严禁出现原始JSON或粘贴式搜索结果\n- 必须是结构化总结（Markdown 标题 + 列表）\n- 不合规时给出修复后的最终稿",
+          "model_client": {
+            "provider": "autogen_ext.models.openai.OpenAIChatCompletionClient",
+            "component_type": "model",
+            "version": 1,
+            "component_version": 1,
+            "config": {
+              "model": "qwen-turbo-latest",
+              "api_key_env": "DASHSCOPE_API_KEY",
+              "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+              "model_info": {
+                "api_type": "openai",
+                "family": "qwen",
+                "vision": false,
+                "function_calling": true,
+                "json_output": false
+              },
+              "parameters": { "temperature": 0.1, "timeout": 120 }
+            }
+          },
+          "tools": [],
+          "memory": []
+        }
+      }
+    ],
+    "termination_condition": null,
+    "max_turns": 5,
+    "emit_team_events": true
+  }
+}
