@@ -1,0 +1,23 @@
+# Core Autogen 0.7.1 stack
+autogen-core==0.7.1
+autogen-agentchat==0.7.1
+autogen-ext[graphrag,mcp,http-tool,web-surfer]==0.7.1
+
+# API & server
+fastapi>=0.111.0,<1
+uvicorn[standard]>=0.30.0,<1
+python-dotenv>=1.0.1
+
+# Optional tools
+requests>=2.31.0
+httpx>=0.28.1,<1
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+chromadb>=0.4.22
+sentence-transformers>=2.4.0
+numpy>=1.24.0
+pandas>=2.0.0
+jsonschema>=4.0.0
+playwright>=1.40.0
+watchdog>=3.0.0
+mcp>=1.1.0
