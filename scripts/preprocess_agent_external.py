@@ -140,15 +140,23 @@ def _autogen_infer(agent_cfg: dict, text: str, timeout: float) -> str:
 def _direct_call(agent_cfg: dict, text: str, timeout: float) -> str:
     mc = (agent_cfg.get('model_client') or {}).get('config', {})
     mc = _expand_env_placeholders(mc)
+    # 1) 读取 api_key；若未配置 api_key，尝试通过 api_key_env 从环境变量读取
     api_key = str(mc.get('api_key') or '').strip()
+    if not api_key:
+        api_key_env = str(mc.get('api_key_env') or '').strip()
+        if api_key_env:
+            api_key = os.environ.get(api_key_env, '').strip()
+    # 2) 读取 base_url 与 model
     base_url = str(mc.get('base_url') or '').rstrip('/')
     model_id = str(mc.get('model') or '').strip()
-    if not (api_key and base_url and model_id):
-        missing = []
-        if not model_id: missing.append('model')
-        if not base_url: missing.append('base_url')
-        if not api_key: missing.append('api_key')
-        raise RuntimeError(f"直连缺少字段：{','.join(missing)}")
+    # 3) 若直连所需字段仍不全，则回退到本地统一服务提供的 mock 端点
+    #    这样在无外部 API Key 的环境中也能端到端联通
+    if not base_url:
+        base_url = os.environ.get('LOCAL_CHAT_BASE_URL', 'http://127.0.0.1:33333')
+    if not model_id:
+        model_id = 'backend-mock'
+    if not api_key:
+        api_key = 'mock-key'
 
     # 控制生成长度：尊重配置，设置合理上限以避免服务端拒绝
     max_tokens = mc.get('max_tokens', 1024)

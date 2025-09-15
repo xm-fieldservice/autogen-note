@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File, Response, Form
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from typing import Optional
 import os
 import sys
@@ -28,8 +29,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
     allow_credentials=True,
-    allow_methods=["*"]
-    ,allow_headers=["*"]
+    allow_methods=["*"],
+    allow_headers=["*"]
 )
 
 # 简易内存态：用于预演接口，后续将替换为 DB/MCP 管道
@@ -315,8 +316,8 @@ async def test_validate(body: TestValidateRequest):
 async def health():
     return {"status": "ok"}
 
-@app.get("/")
-async def root():
+@app.get("/meta")
+async def meta():
     return {
         "message": "AutoGen Notes Backend is running",
         "version": "0.7.1",
@@ -369,3 +370,7 @@ async def well_known(path: str):
 @app.get("/favicon.ico")
 async def favicon():
     return Response(status_code=204)
+
+# 放在所有 API 路由之后，以避免路由冲突
+app.mount("/", StaticFiles(directory=str(Path(__file__).resolve().parents[2] / "web"), html=True), name="static")
+

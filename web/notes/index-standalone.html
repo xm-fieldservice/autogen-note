@@ -117,6 +117,7 @@
         <div class="log-toolbar">
           <strong>调试日志</strong>
           <div class="spacer"></div>
+          <button id="btn-copy-log" class="btn sm secondary">复制</button>
           <button id="btn-clear-log" class="btn sm secondary">清空</button>
         </div>
         <div id="debug-feed" class="log-feed" aria-label="调试日志"></div>
@@ -216,88 +217,88 @@
 
   <script>
   (function(){
-    const $ = (s,p=document)=>p.querySelector(s); const $$=(s,p=document)=>Array.from(p.querySelectorAll(s));
-    const uid = () => Math.random().toString(36).slice(2,10);
-    const escapeHTML = s=> (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;','\'':'&#39;'}[c]));
+    const $ = (s, p = document) => p.querySelector(s);
+    const $$ = (s, p = document) => Array.from(p.querySelectorAll(s));
+    const uid = () => Math.random().toString(36).slice(2, 10);
+    const escapeHTML = s => (s || '').replace(/[&<>"']/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;'}[c]));
 
     const state = {
-      activeTab:'current', activeMode:'note', autoMode:false,
-      selectedTeam:null, selectedAgent:null,
-      recentTeams:[], recentAgents:[],
-      selectedTags:new Set(),
-      topics:{ current:[], archived:[] },
-      sessions:[], // {id,topicId,content,createdAt,favorited}
-      activeTopicId:null,
-      selectedSessionId:null
+        activeTab: 'current', activeMode: 'note', autoMode: false,
+        selectedTeam: null, selectedAgent: null,
+        recentTeams: [], recentAgents: [],
+        selectedTags: new Set(),
+        topics: { current: [], archived: [] },
+        sessions: [],
+        activeTopicId: null,
+        selectedSessionId: null
     };
 
-    // This will be updated later with the correct proxy URL
-    const apiBase = (() => {
-      try {
-        return window.apiBaseOverride || localStorage.getItem('apiBaseOverride') || 'http://127.0.0.1:32881';
-      } catch (e) {
-        return 'http://127.0.0.1:32881';
-      }
-    })();
+    // 统一服务模式：使用相对路径访问后端 API（同源同端口）
+    const apiBase = '';
+    const apiBaseLabelVal = apiBase || (typeof location !== 'undefined' ? location.origin : '');
     try { localStorage.setItem('apiBaseOverride', apiBase); } catch {}
 
-    // persistence
-    function persist(){
-      const feed = $('#output-feed');
-      const feedData = Array.from(feed.querySelectorAll('.feed-item')).map(el=>({
-        topicId: el.dataset.topicId||null,
-        role: el.dataset.role||'user',
-        meta: el.querySelector('.meta')?.textContent||'',
-        content: el.querySelector('.content')?.textContent||''
-      }));
-      const data={
-        topics:state.topics, sessions:state.sessions,
-        selectedTags:[...state.selectedTags], activeMode:state.activeMode,
-        activeTab: state.activeTab, activeTopicId: state.activeTopicId,
-        feed:feedData
-      };
-      localStorage.setItem('notes_ui_state_v1', JSON.stringify(data));
+    function persist() {
+        const feed = $('#output-feed');
+        const feedData = Array.from(feed.querySelectorAll('.feed-item')).map(el => ({
+            topicId: el.dataset.topicId || null,
+            role: el.dataset.role || 'user',
+            meta: el.querySelector('.meta')?.textContent || '',
+            content: el.querySelector('.content')?.textContent || ''
+        }));
+        const data = {
+            topics: state.topics, sessions: state.sessions,
+            selectedTags: [...state.selectedTags], activeMode: state.activeMode,
+            activeTab: state.activeTab, activeTopicId: state.activeTopicId,
+            feed: feedData
+        };
+        localStorage.setItem('notes_ui_state_v1', JSON.stringify(data));
     }
 
-    function collectPolicy(){
-      const p = {
-        index_vector: ($('#pol-index-vector').checked?1:0),
-        index_graphrag: ($('#pol-index-graphrag').checked?1:0),
-        knowledge_base: $('#pol-knowledge-base').value || null,
-        retention_ttl_days: (function(){ const v=$('#pol-ttl').value; return v? parseInt(v,10): null; })()
-      };
-      try { localStorage.setItem('notes_policy_v1', JSON.stringify(p)); } catch {}
-      return p;
+    function collectPolicy() {
+        const p = {
+            index_vector: ($('#pol-index-vector').checked ? 1 : 0),
+            index_graphrag: ($('#pol-index-graphrag').checked ? 1 : 0),
+            knowledge_base: $('#pol-knowledge-base').value || null,
+            retention_ttl_days: (() => { const v = $('#pol-ttl').value; return v ? parseInt(v, 10) : null; })()
+        };
+        try { localStorage.setItem('notes_policy_v1', JSON.stringify(p)); } catch {}
+        return p;
     }
-    function restorePolicy(){
-      try { const raw = localStorage.getItem('notes_policy_v1'); if(!raw) return; const p = JSON.parse(raw);
-        $('#pol-index-vector').checked = !!p.index_vector;
-        $('#pol-index-graphrag').checked = !!p.index_graphrag;
-        if(p.knowledge_base) $('#pol-knowledge-base').value = p.knowledge_base;
-        if(p.retention_ttl_days!=null) $('#pol-ttl').value = p.retention_ttl_days;
-      } catch {}
+
+    function restorePolicy() {
+        try {
+            const raw = localStorage.getItem('notes_policy_v1'); if (!raw) return;
+            const p = JSON.parse(raw);
+            $('#pol-index-vector').checked = !!p.index_vector;
+            $('#pol-index-graphrag').checked = !!p.index_graphrag;
+            if (p.knowledge_base) $('#pol-knowledge-base').value = p.knowledge_base;
+            if (p.retention_ttl_days != null) $('#pol-ttl').value = p.retention_ttl_days;
+        } catch {}
     }
     window.persistUI = persist;
-    function load(){
-      try{ const raw=localStorage.getItem('notes_ui_state_v1'); if(!raw) return null; return JSON.parse(raw);}catch{return null}
+
+    function load() {
+        try { const raw = localStorage.getItem('notes_ui_state_v1'); if (!raw) return null; return JSON.parse(raw); } catch { return null }
     }
 
-    // team/agent recent helpers
-    const RECENT_TEAMS_KEY='notes_recent_teams_v1';
-    const RECENT_AGENTS_KEY='notes_recent_agents_v1';
-    function loadRecent(key){ try{return JSON.parse(localStorage.getItem(key)||'[]')}catch{return []} }
-    function saveRecent(key, path, name){ const list=loadRecent(key); if(!list.find(x=>x.path===path)){ list.unshift({path,name,ts:Date.now()}); localStorage.setItem(key, JSON.stringify(list.slice(0,10))); } }
-    function renderRecentSelect(selId, key){ const list=loadRecent(key); const sel=$(selId); sel.innerHTML='<option value="">最近使用…</option>'+list.map(rt=>`<option value="${encodeURIComponent(rt.path)}">${rt.name}</option>`).join(''); }
+    const RECENT_TEAMS_KEY = 'notes_recent_teams_v1';
+    const RECENT_AGENTS_KEY = 'notes_recent_agents_v1';
+    function loadRecent(key) { try { return JSON.parse(localStorage.getItem(key) || '[]') } catch { return [] } }
+    function saveRecent(key, path, name) { const list = loadRecent(key); if (!list.find(x => x.path === path)) { list.unshift({ path, name, ts: Date.now() }); localStorage.setItem(key, JSON.stringify(list.slice(0, 10))); } }
+    function renderRecentSelect(selId, key) { const list = loadRecent(key); const sel = $(selId); sel.innerHTML = '<option value="">最近使用…</option>' + list.map(rt => `<option value="${encodeURIComponent(rt.path)}">${rt.name}</option>`).join(''); }
 
-    // tabs
-    function bindTabs(){
-      $$('.tab').forEach(btn=>{
-        btn.addEventListener('click',()=>{
-          $$('.tab').forEach(b=>b.classList.remove('active')); btn.classList.add('active');
-          state.activeTab=btn.dataset.tab; $$('.tab-content').forEach(c=>c.classList.add('hidden')); $(`#tab-${state.activeTab}`).classList.remove('hidden');
-          persist();
-        })
-      })
+    function bindTabs() {
+        $$('.tab').forEach(btn => {
+            btn.addEventListener('click', () => {
+                $$('.tab').forEach(b=>b.classList.remove('active'));
+                btn.classList.add('active');
+                state.activeTab=btn.dataset.tab;
+                $$('.tab-content').forEach(c=>c.classList.add('hidden'));
+                $(`#tab-${state.activeTab}`).classList.remove('hidden');
+                persist();
+            });
+        });
     }
 
     // topics
@@ -375,7 +376,7 @@
 
     // export: topic -> markdown + attachments.json (创建时间升序)
     async function exportTopic(topicId){
-      if(apiEnabled){ try{ const res = await fetch(`${apiBase}/export/topic/${encodeURIComponent(topicId)}`); const data = await res.json(); downloadText(`topic-${topicId}.md`, data.markdown||'', 'text/markdown;charset=utf-8'); downloadText('attachments.json', JSON.stringify(data.attachments||[], null, 2), 'application/json;charset=utf-8'); return; } catch(err){ console.warn('[export api] 失败，改用本地导出', err); } }
+      if(apiEnabled){ try{ const res = await fetch(`/export/topic/${encodeURIComponent(topicId)}`); const data = await res.json(); downloadText(`topic-${topicId}.md`, data.markdown||'', 'text/markdown;charset=utf-8'); downloadText('attachments.json', JSON.stringify(data.attachments||[], null, 2), 'application/json;charset=utf-8'); return; } catch(err){ console.warn('[export api] 失败，改用本地导出', err); } }
       const t = findTopicById(topicId); if(!t){ alert('未找到该议题'); return; }
       const notes = state.sessions.filter(s=> s.topicId===topicId).slice().sort((a,b)=> (a.createdAt||0)-(b.createdAt||0));
       const lines = [];
@@ -416,10 +417,10 @@
     $('#btn-pick-agent').addEventListener('click',()=>$('#agent-file').click());
     $('#agent-file').addEventListener('change',e=>{ const f=e.target.files?.[0]; if(!f) return; state.selectedAgent={name:f.name,path:f.name}; saveRecent(RECENT_AGENTS_KEY,f.name,f.name); renderRecentSelect('#recent-agents',RECENT_AGENTS_KEY);
       // 强制开启并锁定 API
-      apiPinned = true; apiEnabled = true; const st=$('#api-status'); if(st) st.textContent='API: 开*'; const lbl=$('#api-base-label'); if(lbl) lbl.textContent=apiBase; console.log('[api] pinned ON due to agent selection'); });
+      apiPinned = true; apiEnabled = true; const st=$('#api-status'); if(st) st.textContent='API: 开*'; const lbl=$('#api-base-label'); if(lbl) lbl.textContent=apiBaseLabelVal; console.log('[api] pinned ON due to agent selection'); });
     $('#recent-agents').addEventListener('change',e=>{ const v=e.target.value; if(!v) return; const path=decodeURIComponent(v); const item=loadRecent(RECENT_AGENTS_KEY).find(x=>x.path===path); if(item) state.selectedAgent={name:item.name,path:item.path};
       // 强制开启并锁定 API（选择最近 Agent 时）
-      apiPinned = true; apiEnabled = true; const st=$('#api-status'); if(st) st.textContent='API: 开*'; const lbl=$('#api-base-label'); if(lbl) lbl.textContent=apiBase; console.log('[api] pinned ON due to recent agent selection'); });
+      apiPinned = true; apiEnabled = true; const st=$('#api-status'); if(st) st.textContent='API: 开*'; const lbl=$('#api-base-label'); if(lbl) lbl.textContent=apiBaseLabelVal; console.log('[api] pinned ON due to recent agent selection'); });
 
     // editors & shortcuts
     function wrap(textarea, wrapper){ const s=textarea.selectionStart, e=textarea.selectionEnd, v=textarea.value; textarea.value = v.slice(0,s)+wrapper+v.slice(s,e)+wrapper+v.slice(e); textarea.focus(); }
@@ -432,7 +433,7 @@
     $('#btn-output-italic').addEventListener('click',()=> wrapLastFeed('*'));
     $('#btn-output-copy').addEventListener('click',()=> { const texts=[...$('#output-feed').querySelectorAll('.feed-item .content')].map(n=>n.textContent||''); navigator.clipboard.writeText(texts.join('\n\n')); });
 
-    $('#file-upload').addEventListener('change',async e=>{ const files=[...(e.target.files||[])]; if(!files.length) return; if(!apiEnabled){ console.log('[upload] 本地模式占位', files.map(f=>({name:f.name,size:f.size}))); return; } for(const f of files){ try{ const fd=new FormData(); fd.append('topic_id', state.activeTopicId||''); fd.append('file', f, f.name); const res= await fetch(`${apiBase}/ingest`, { method:'POST', body: fd }); const data = await res.json(); console.log('[ingest] ok', data); } catch(err){ console.error('[ingest] 失败', err); } } });
+    $('#file-upload').addEventListener('change',async e=>{ const files=[...(e.target.files||[])]; if(!files.length) return; if(!apiEnabled){ console.log('[upload] 本地模式占位', files.map(f=>({name:f.name,size:f.size}))); return; } for(const f of files){ try{ const fd=new FormData(); fd.append('topic_id', state.activeTopicId||''); fd.append('file', f, f.name); const res= await fetch(`/ingest`, { method:'POST', body: fd }); const data = await res.json(); console.log('[ingest] ok', data); } catch(err){ console.error('[ingest] 失败', err); } } });
 
     function appendFeedItem({role,content,agent,topicId}){
       const feed=$('#output-feed'); const time=new Date().toLocaleString();
@@ -472,7 +473,7 @@
       if(apiEnabled){
         try{
           console.log('[preprocess] start via API', { topic_id: state.activeTopicId, mode: state.activeMode, agent: state.selectedAgent?.path });
-          const res = await fetch(`${apiBase}/preprocess`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ topic_id: state.activeTopicId, raw_md: text, mode: state.activeMode, agent_config_path: state.selectedAgent?.path||null }) });
+          const res = await fetch(`/preprocess`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ topic_id: state.activeTopicId, raw_md: text, mode: state.activeMode, agent_config_path: state.selectedAgent?.path||null }) });
           const data = await res.json();
           console.log('[preprocess] done', { ok: data?.ok, len: (data?.markdown||'').length });
           appendFeedItem({role:'user', content:data.markdown||text, agent, topicId: state.activeTopicId});
@@ -530,9 +531,8 @@
         oneShotSubmit();
       }
     }
-    // 全局绑定（兜底）与输入框绑定（优先）
+    // 全局绑定快捷键，确保任何时候都能触发
     document.addEventListener('keydown', handleGlobalSubmitShortcut);
-    document.getElementById('input-md')?.addEventListener('keydown', handleGlobalSubmitShortcut);
 
     function renderSessions(){
       const ul=$('#session-list');
@@ -601,13 +601,14 @@
       console.error = (...args)=>{ oerr.apply(console, args); try{ appendDebug(args.map(x=> (typeof x==='string'? x: JSON.stringify(x, null, 2))).join(' '), 'error'); }catch{} };
     })();
 
-    // 日志区：清空
+    // 日志区：清空与复制
     document.getElementById('btn-clear-log')?.addEventListener('click',()=>{ const box=$('#debug-feed'); if(box) box.innerHTML=''; });
+    document.getElementById('btn-copy-log')?.addEventListener('click',()=>{ const box=$('#debug-feed'); if(box) navigator.clipboard.writeText(box.innerText); });
 
     // 当选择 Agent 后，强制锁定 API 处于开启状态，健康检查不再将其置为“关”
     let apiPinned = false;
     document.getElementById('api-status').textContent = 'API: 开';
-    document.getElementById('api-base-label').textContent = apiBase;
+    document.getElementById('api-base-label').textContent = apiBaseLabelVal;
 
     function init(){
       // load saved or demo
@@ -637,17 +638,17 @@
         if (apiPinned){
           apiEnabled = true;
           document.getElementById('api-status').textContent = 'API: 开*';
-          document.getElementById('api-base-label').textContent = apiBase;
+          document.getElementById('api-base-label').textContent = apiBaseLabelVal;
           if (lastApiOk !== true){ appendDebug('[api] pinned 开启（忽略健康检查结果）'); }
           lastApiOk = true;
           return;
         }
         apiEnabled = !!ok;
         document.getElementById('api-status').textContent = ok? 'API: 开' : 'API: 关';
-        document.getElementById('api-base-label').textContent = apiBase;
+        document.getElementById('api-base-label').textContent = apiBaseLabelVal;
         if (lastApiOk !== ok){ appendDebug(`[api] 健康检查：${ok? '可用' : '不可用'}`); lastApiOk = ok; }
       }
-      async function checkHealth(){ try{ const res = await fetch(`${apiBase}/healthz`, { cache:'no-store' }); updateApiIndicator(res.ok); } catch{ updateApiIndicator(false); } }
+      async function checkHealth(){ try{ const res = await fetch(`/healthz`, { cache:'no-store' }); updateApiIndicator(res.ok); } catch{ updateApiIndicator(false); } }
       checkHealth();
       setInterval(checkHealth, 10000);
       // 初次进入时，根据已选议题过滤中间栏
