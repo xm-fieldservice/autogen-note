@@ -332,6 +332,35 @@ async def root():
         }
     }
 
+# OpenAI 兼容端点（用于本地直连兜底）：/chat/completions
+# 注意：仅用于开发与调试，生产请接入真实模型服务
+@app.post("/chat/completions")
+async def chat_completions(payload: dict):
+    try:
+        model = str(payload.get("model") or "mock-model")
+        messages = payload.get("messages") or []
+        user_text = ""
+        for m in messages:
+            if isinstance(m, dict) and m.get("role") == "user":
+                user_text = str(m.get("content") or "")
+        stamp = int(time.time())
+        content = f"# 结果整理\n\n> backend-mock · model={model}\n\n" + user_text
+        return {
+            "id": "chatcmpl-backend-mock",
+            "object": "chat.completion",
+            "created": stamp,
+            "model": model,
+            "choices": [
+                {
+                    "index": 0,
+                    "message": {"role": "assistant", "content": content},
+                    "finish_reason": "stop",
+                }
+            ],
+        }
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"bad request: {e}")
+
 # 静默处理浏览器自动探测与站点图标，避免噪音 404
 @app.get("/.well-known/{path:path}")
 async def well_known(path: str):

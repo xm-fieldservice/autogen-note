@@ -1,0 +1,19 @@
+{
+  "component_type": "agent",
+  "label": "本地MockAgent",
+  "config": {
+    "name": "LocalMockAgent",
+    "system_message": "你是一个负责把用户输入整理成结果的Agent。",
+    "model_client": {
+      "provider": "openai_compatible",
+      "config": {
+        "base_url": "http://127.0.0.1:3010",
+        "api_key": "sk-mock",
+        "model": "mock-model",
+        "max_tokens": 512,
+        "temperature": 0.2,
+        "top_p": 0.9
+      }
+    }
+  }
+}

@@ -74,6 +74,14 @@
     .badge.ok { background:#ecfdf5; color:#059669; }
     .badge.fail { background:#fef2f2; color:#b91c1c; }
     .api-indicator small { color:#6b7280; margin-left:6px; }
+    /* 日志区样式 */
+    .log-section { border-top: 1px solid #e5e7eb; padding:8px; }
+    .log-toolbar { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+    .log-feed { width:100%; height:160px; overflow:auto; border:1px solid #e5e7eb; border-radius:6px; padding:8px; background:#fff; display:flex; flex-direction:column; gap:6px; }
+    .log-item { font-size:12px; line-height:1.4; border-left:3px solid #e5e7eb; padding:4px 6px; background:#fafafa; }
+    .log-item.ok { border-color:#10b981; }
+    .log-item.warn { border-color:#f59e0b; background:#fff7ed; }
+    .log-item.err { border-color:#ef4444; background:#fef2f2; }
   </style>
 </head>
 <body>
@@ -103,6 +111,15 @@
           <ul id="tag-list" class="tag-list"></ul>
           <div class="tag-hint">多选标签后，议题列表按 AND 过滤；新建议题默认继承已选标签。</div>
         </div>
+      </div>
+      <!-- 调试日志区（固定在侧栏底部） -->
+      <div class="log-section">
+        <div class="log-toolbar">
+          <strong>调试日志</strong>
+          <div class="spacer"></div>
+          <button id="btn-clear-log" class="btn sm secondary">清空</button>
+        </div>
+        <div id="debug-feed" class="log-feed" aria-label="调试日志"></div>
       </div>
     </aside>
 
@@ -151,6 +168,8 @@
           <button class="btn sm" id="btn-input-italic">I</button>
           <button class="btn sm" id="btn-input-copy">复制全部</button>
           <button class="btn sm" id="btn-input-paste">粘贴</button>
+          <button class="btn sm secondary" id="btn-test-shortcut" title="进入或退出快捷键诊断模式">测试快捷键</button>
+          <button class="btn sm" id="btn-submit">提交</button>
           <div class="picker-group">
             <button id="btn-pick-agent" class="btn sm">选择 Agent</button>
             <select id="recent-agents" class="recent-select" title="最近使用的 Agent">
@@ -173,14 +192,14 @@
             <input id="pol-ttl" type="number" min="0" step="1" style="width:80px;" />
           </label>
         </div>
-        <textarea id="input-md" class="editor" placeholder="输入内容。Enter=换行；Alt+Enter=一键加入会话"></textarea>
+        <textarea id="input-md" class="editor" placeholder="输入内容。Enter=换行；点击“提交”一次性完成（若选了 Agent 将先预处理）"></textarea>
         <div class="input-actions">
           <label class="btn">
             附件上传
             <input type="file" id="file-upload" class="hidden" multiple />
           </label>
         </div>
-        <div class="hint">快捷键：Alt+Enter 一键加入会话（整理后立即入右侧列表）。</div>
+        <div class="hint">说明：点击“提交”一次性完成。若已选择 Agent，将先调用 Agent 进行预处理并将结果写入输出区，同时写入右侧会话列表；未选择 Agent 则直接写入。</div>
       </section>
     </main>
 
@@ -211,6 +230,16 @@
       activeTopicId:null,
       selectedSessionId:null
     };
+
+    // This will be updated later with the correct proxy URL
+    const apiBase = (() => {
+      try {
+        return window.apiBaseOverride || localStorage.getItem('apiBaseOverride') || 'http://127.0.0.1:32881';
+      } catch (e) {
+        return 'http://127.0.0.1:32881';
+      }
+    })();
+    try { localStorage.setItem('apiBaseOverride', apiBase); } catch {}
 
     // persistence
     function persist(){
@@ -385,8 +414,12 @@
     $('#recent-teams').addEventListener('change',e=>{ const v=e.target.value; if(!v) return; const path=decodeURIComponent(v); const item=loadRecent(RECENT_TEAMS_KEY).find(x=>x.path===path); if(item) state.selectedTeam={name:item.name,path:item.path}; });
 
     $('#btn-pick-agent').addEventListener('click',()=>$('#agent-file').click());
-    $('#agent-file').addEventListener('change',e=>{ const f=e.target.files?.[0]; if(!f) return; state.selectedAgent={name:f.name,path:f.name}; saveRecent(RECENT_AGENTS_KEY,f.name,f.name); renderRecentSelect('#recent-agents',RECENT_AGENTS_KEY); });
-    $('#recent-agents').addEventListener('change',e=>{ const v=e.target.value; if(!v) return; const path=decodeURIComponent(v); const item=loadRecent(RECENT_AGENTS_KEY).find(x=>x.path===path); if(item) state.selectedAgent={name:item.name,path:item.path}; });
+    $('#agent-file').addEventListener('change',e=>{ const f=e.target.files?.[0]; if(!f) return; state.selectedAgent={name:f.name,path:f.name}; saveRecent(RECENT_AGENTS_KEY,f.name,f.name); renderRecentSelect('#recent-agents',RECENT_AGENTS_KEY);
+      // 强制开启并锁定 API
+      apiPinned = true; apiEnabled = true; const st=$('#api-status'); if(st) st.textContent='API: 开*'; const lbl=$('#api-base-label'); if(lbl) lbl.textContent=apiBase; console.log('[api] pinned ON due to agent selection'); });
+    $('#recent-agents').addEventListener('change',e=>{ const v=e.target.value; if(!v) return; const path=decodeURIComponent(v); const item=loadRecent(RECENT_AGENTS_KEY).find(x=>x.path===path); if(item) state.selectedAgent={name:item.name,path:item.path};
+      // 强制开启并锁定 API（选择最近 Agent 时）
+      apiPinned = true; apiEnabled = true; const st=$('#api-status'); if(st) st.textContent='API: 开*'; const lbl=$('#api-base-label'); if(lbl) lbl.textContent=apiBase; console.log('[api] pinned ON due to recent agent selection'); });
 
     // editors & shortcuts
     function wrap(textarea, wrapper){ const s=textarea.selectionStart, e=textarea.selectionEnd, v=textarea.value; textarea.value = v.slice(0,s)+wrapper+v.slice(s,e)+wrapper+v.slice(e); textarea.focus(); }
@@ -417,6 +450,15 @@
       feed.scrollTop=feed.scrollHeight;
       persist();
     }
+    // 独立日志追加（不受议题过滤影响）
+    function appendLogItem({level, content}){
+      const box = $('#debug-feed'); const time=new Date().toLocaleTimeString();
+      const div=document.createElement('div');
+      const lvl = (level||'log').toLowerCase();
+      div.className = 'log-item ' + (lvl==='error'?'err': (lvl==='warn'?'warn':'ok'));
+      div.textContent = `[${time}] ${content}`;
+      box.appendChild(div); box.scrollTop = box.scrollHeight;
+    }
     function wrapLastFeed(wrapper){ const items=$$('#output-feed .feed-item .content'); if(!items.length) return; const last=items[items.length-1]; last.textContent = `${wrapper}${last.textContent}${wrapper}`; persist(); }
     function latestFeedText(){ const items=$$('#output-feed .feed-item .content'); if(!items.length) return ''; return items[items.length-1].textContent||''; }
 
@@ -429,19 +471,20 @@
       // 情况2：选择了Agent → 走API（若API不可用则回退原样输出）
       if(apiEnabled){
         try{
+          console.log('[preprocess] start via API', { topic_id: state.activeTopicId, mode: state.activeMode, agent: state.selectedAgent?.path });
           const res = await fetch(`${apiBase}/preprocess`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ topic_id: state.activeTopicId, raw_md: text, mode: state.activeMode, agent_config_path: state.selectedAgent?.path||null }) });
           const data = await res.json();
+          console.log('[preprocess] done', { ok: data?.ok, len: (data?.markdown||'').length });
           appendFeedItem({role:'user', content:data.markdown||text, agent, topicId: state.activeTopicId});
-        }catch(err){ console.warn('[preprocess api] 失败，回退本地', err); appendFeedItem({role:'user', content:text, agent, topicId: state.activeTopicId}); }
+        }catch(err){ console.warn(`[preprocess api] 失败，回退本地. Error: ${err.message || String(err)}`); appendFeedItem({role:'user', content:text, agent, topicId: state.activeTopicId}); }
       } else {
         appendFeedItem({role:'user', content:text, agent, topicId: state.activeTopicId});
       }
       $('#input-md').value='';
     }
-    async function onAltEnter(){
+    async function oneShotSubmit(){
       if(!state.activeTopicId){ alert('请先选择一个议题'); return; }
       await preprocess();
-      // 预处理完成后，立即把最新输出加入右侧会话列表（本地，不自动入库）
       const content=latestFeedText(); const topicId=state.activeTopicId; if(!topicId){ return; }
       if(state.activeMode==='note' || state.activeMode==='search'){
         const sid=uid(); state.sessions.unshift({id:sid, topicId, content, createdAt: Date.now(), favorited:false, dbStatus:'local'}); renderSessions();
@@ -451,7 +494,45 @@
       persist();
     }
 
-    $('#input-md').addEventListener('keydown',e=>{ if(e.key==='Enter' && e.altKey){ e.preventDefault(); onAltEnter(); } });
+    // 快捷键诊断
+    let isShortcutTesting = false;
+    const btnTestShortcut = document.getElementById('btn-test-shortcut');
+    function shortcutTestListener(e) {
+      e.preventDefault();
+      const msg = `[Shortcut Test] key: ${e.key}, code: ${e.code}, alt: ${e.altKey}, ctrl: ${e.ctrlKey}, shift: ${e.shiftKey}, meta: ${e.metaKey}`;
+      console.log(msg);
+    }
+    btnTestShortcut?.addEventListener('click', () => {
+      isShortcutTesting = !isShortcutTesting;
+      if (isShortcutTesting) {
+        console.log('[shortcut] 进入诊断模式');
+        document.addEventListener('keydown', shortcutTestListener, true);
+        btnTestShortcut.style.backgroundColor = '#ef4444'; // 红色表示激活
+        btnTestShortcut.textContent = '停止测试';
+      } else {
+        console.log('[shortcut] 退出诊断模式');
+        document.removeEventListener('keydown', shortcutTestListener, true);
+        btnTestShortcut.style.backgroundColor = ''; // 恢复原样
+        btnTestShortcut.textContent = '测试快捷键';
+      }
+    });
+
+    document.getElementById('btn-submit')?.addEventListener('click', oneShotSubmit);
+
+    // 统一处理提交快捷键（Alt+Enter 或 Ctrl+Enter）
+    function handleGlobalSubmitShortcut(e) {
+      // 增加调试日志，投射到输出区，便于判断事件是否被捕获
+      console.log(`[shortcut] keydown: key=${e.key} alt=${e.altKey} ctrl=${e.ctrlKey}`);
+      const isSubmit = e.key === 'Enter' && (e.altKey || e.ctrlKey);
+      if (isSubmit) {
+        console.log('[shortcut] 快捷键提交触发');
+        e.preventDefault();
+        oneShotSubmit();
+      }
+    }
+    // 全局绑定（兜底）与输入框绑定（优先）
+    document.addEventListener('keydown', handleGlobalSubmitShortcut);
+    document.getElementById('input-md')?.addEventListener('keydown', handleGlobalSubmitShortcut);
 
     function renderSessions(){
       const ul=$('#session-list');
@@ -476,19 +557,55 @@
     }
 
     // 统一“测试入库”按钮逻辑
-    async function validateSelectedSession(){ const id = state.selectedSessionId; if(!id){ alert('请先点击选择一条会话'); return; } const s = state.sessions.find(x=>x.id===id); if(!s){ alert('未找到该会话'); return; } if(!s.noteId){ alert('该会话缺少 note_id，可能是本地模式或旧数据，无法测试入库'); return; } try{ const payload = { topic_id: String(s.topicId), note_id: String(s.noteId), expect: (s.content||'').slice(0,200), api_base: apiBase }; const res = await fetch(`${apiBase}/test/validate`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) }); const data = await res.json(); const ok = !!(data && (data.ok===true || data.ok==='true')); let report = (data && data.report_markdown) ? String(data.report_markdown) : ''; if(!report || !report.trim()){ try{ report = '返回数据：\n\n```json\n'+ JSON.stringify(data, null, 2) + '\n```'; } catch{ report = '（无报告）'; } } const finalMd = (ok? '✅ 测试通过' : '❌ 测试未通过') + '\n\n' + report; appendFeedItem({ role:'assistant', content: finalMd, agent:'validator', topicId: state.activeTopicId }); // 同时写入会话列表（本地，不入库）
-      const sid=uid(); state.sessions.unshift({ id:sid, topicId: state.activeTopicId, content: finalMd, createdAt: Date.now(), favorited:false, dbStatus:'local' }); renderSessions(); persist();
-      } catch(err){ appendFeedItem({ role:'assistant', content: '测试入库失败：'+ String(err), agent:'validator', topicId: state.activeTopicId }); }
+    async function validateSelectedSession() {
+      const id = state.selectedSessionId;
+      if (!id) { alert('请先点击选择一条会话'); return; }
+      const s = state.sessions.find(x => x.id === id);
+      if (!s) { alert('未找到该会话'); return; }
+      if (!s.noteId) { alert('该会话缺少 note_id，可能是本地模式或旧数据，无法测试入库'); return; }
+      try {
+        const payload = { topic_id: String(s.topicId), note_id: String(s.noteId), expect: (s.content || '').slice(0, 200), api_base: apiBase };
+        const res = await fetch(`${apiBase}/test/validate`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+        const data = await res.json();
+        const ok = !!(data && (data.ok === true || data.ok === 'true'));
+        let report = (data && data.report_markdown) ? String(data.report_markdown) : '';
+        if (!report || !report.trim()) {
+          try { report = '返回数据：\n\n```json\n' + JSON.stringify(data, null, 2) + '\n```'; } catch { report = '（无报告）'; }
+        }
+        const finalMd = (ok ? '✅ 测试通过' : '❌ 测试未通过') + '\n\n' + report;
+        appendFeedItem({ role: 'assistant', content: finalMd, agent: 'validator', topicId: state.activeTopicId });
+        const sid = uid();
+        state.sessions.unshift({ id: sid, topicId: state.activeTopicId, content: finalMd, createdAt: Date.now(), favorited: false, dbStatus: 'local' });
+        renderSessions();
+        persist();
+        appendDebug(`[测试入库] ${ok ? '成功' : '失败'}`, ok ? 'log' : 'error');
+      } catch (err) {
+        appendDebug(`[测试入库] 失败: ${err}`, 'error');
+      }
     }
 
-    // init
-    // API 默认 3000；支持通过 window.apiBaseOverride 或 localStorage('apiBaseOverride') 覆盖
-    const apiBase = (window.apiBaseOverride) || (function(){
-      try { return localStorage.getItem('apiBaseOverride') || 'http://127.0.0.1:3000'; } catch { return 'http://127.0.0.1:3000'; }
+    // ========== 调试信息投射到侧栏日志区 ==========
+    function appendDebug(msg, level = 'log'){
+      try {
+        const content = `[${String(level).toUpperCase()}] ${String(msg)}`;
+        appendLogItem({ level, content });
+      } catch(e) {
+        (console._original_error || console.error)('Error in appendDebug:', e);
+      }
+    }
+    (function hookConsole(){
+      const olog = console.log, owarn = console.warn, oerr = console.error;
+      console._original_log = olog; console._original_warn = owarn; console._original_error = oerr;
+      console.log = (...args)=>{ olog.apply(console, args); try{ appendDebug(args.map(x=> (typeof x==='string'? x: JSON.stringify(x, null, 2))).join(' '), 'log'); }catch{} };
+      console.warn = (...args)=>{ owarn.apply(console, args); try{ appendDebug(args.map(x=> (typeof x==='string'? x: JSON.stringify(x, null, 2))).join(' '), 'warn'); }catch{} };
+      console.error = (...args)=>{ oerr.apply(console, args); try{ appendDebug(args.map(x=> (typeof x==='string'? x: JSON.stringify(x, null, 2))).join(' '), 'error'); }catch{} };
     })();
-    // 将选择持久化，便于刷新后保留
-    try { localStorage.setItem('apiBaseOverride', apiBase); } catch {}
-    let apiEnabled = true;
+
+    // 日志区：清空
+    document.getElementById('btn-clear-log')?.addEventListener('click',()=>{ const box=$('#debug-feed'); if(box) box.innerHTML=''; });
+
+    // 当选择 Agent 后，强制锁定 API 处于开启状态，健康检查不再将其置为“关”
+    let apiPinned = false;
     document.getElementById('api-status').textContent = 'API: 开';
     document.getElementById('api-base-label').textContent = apiBase;
 
@@ -515,7 +632,21 @@
 
       bindTabs();
       // 简单健康检查 + 轮询
-      function updateApiIndicator(ok){ apiEnabled=!!ok; document.getElementById('api-status').textContent = ok? 'API: 开' : 'API: 关'; document.getElementById('api-base-label').textContent = apiBase; }
+      let lastApiOk = null;
+      function updateApiIndicator(ok){
+        if (apiPinned){
+          apiEnabled = true;
+          document.getElementById('api-status').textContent = 'API: 开*';
+          document.getElementById('api-base-label').textContent = apiBase;
+          if (lastApiOk !== true){ appendDebug('[api] pinned 开启（忽略健康检查结果）'); }
+          lastApiOk = true;
+          return;
+        }
+        apiEnabled = !!ok;
+        document.getElementById('api-status').textContent = ok? 'API: 开' : 'API: 关';
+        document.getElementById('api-base-label').textContent = apiBase;
+        if (lastApiOk !== ok){ appendDebug(`[api] 健康检查：${ok? '可用' : '不可用'}`); lastApiOk = ok; }
+      }
       async function checkHealth(){ try{ const res = await fetch(`${apiBase}/healthz`, { cache:'no-store' }); updateApiIndicator(res.ok); } catch{ updateApiIndicator(false); } }
       checkHealth();
       setInterval(checkHealth, 10000);

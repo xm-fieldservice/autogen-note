@@ -24,7 +24,7 @@ from urllib import request as _req, error as _err
 
 # 尽量少依赖：从本仓库导入内生后端
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from autogen_client.autogen_backends import AutogenAgentBackend  # type: ignore
+# 注意：autogen_client 可能并未安装；在 _autogen_infer 内部按需导入并容错
 
 
 def _load_env():
@@ -127,6 +127,11 @@ def _read_input_file(path: str|None) -> str:
 
 def _autogen_infer(agent_cfg: dict, text: str, timeout: float) -> str:
     # 使用 AutogenAgentBackend 执行一次推理（内部已包含时间校准/内存处理等）
+    try:
+        from autogen_client.autogen_backends import AutogenAgentBackend  # type: ignore
+    except Exception as e:
+        # 触发上层 fallback（直连兜底或占位）
+        raise RuntimeError(f"autogen_client 未可用：{e}")
     backend = AutogenAgentBackend(agent_cfg)
     # 后端 infer_once 同步调用（内部会视情况建立事件循环），由外层统一控制脚本总超时
     return str(backend.infer_once(text or ""))
@@ -259,27 +264,31 @@ def main() -> int:
         print(final_text, end='')
         return 0
     except _err.HTTPError as he:
+        # 本地离线兜底：生成可用内容，便于多轮调试（退出码置 0）
         try:
-            err_body = he.read().decode('utf-8', errors='ignore')
+            _ = he.read().decode('utf-8', errors='ignore')
         except Exception:
-            err_body = ''
-        fail_text = f"# 结果整理\n\n> 预处理 · 外部占位（原因：HTTP {he.code} {he.reason} {err_body[:160]}）"
+            _ = ''
+        mock = (raw_md or '').strip() or '（无内容）'
+        final_text = f"# 结果整理\n\n{mock}\n\n> 预处理 · 本地离线兜底（HTTP {he.code} {he.reason}）\n"
         try:
             if args.output_file:
-                Path(args.output_file).write_text(fail_text, encoding='utf-8')
+                Path(args.output_file).write_text(final_text, encoding='utf-8')
         except Exception:
             pass
-        print(fail_text, end='')
-        return 3
+        print(final_text, end='')
+        return 0
     except _err.URLError as ue:
-        fail_text = f"# 结果整理\n\n> 预处理 · 外部占位（原因：URLError {ue.reason}）"
+        # 本地离线兜底：网络不可用
+        mock = (raw_md or '').strip() or '（无内容）'
+        final_text = f"# 结果整理\n\n{mock}\n\n> 预处理 · 本地离线兜底（URLError {ue.reason}）\n"
         try:
             if args.output_file:
-                Path(args.output_file).write_text(fail_text, encoding='utf-8')
+                Path(args.output_file).write_text(final_text, encoding='utf-8')
         except Exception:
             pass
-        print(fail_text, end='')
-        return 2
+        print(final_text, end='')
+        return 0
     except Exception as e:
         fail_text = f"# 结果整理\n\n> 预处理 · 外部占位（原因：{type(e).__name__}: {e}）"
         try:

@@ -74,6 +74,7 @@
           <button class="btn sm" id="btn-input-italic">I</button>
           <button class="btn sm" id="btn-input-copy">复制全部</button>
           <button class="btn sm" id="btn-input-paste">粘贴</button>
+          <button class="btn sm" id="btn-submit">提交</button>
           <div class="picker-group">
             <button id="btn-pick-agent" class="btn sm">选择 Agent</button>
             <select id="recent-agents" class="recent-select" title="最近使用的 Agent">
@@ -89,7 +90,7 @@
             <input type="file" id="team-file" accept=".json" class="hidden" />
           </div>
         </div>
-        <textarea id="input-md" class="editor" placeholder="输入内容。Enter 换行；Shift+Enter 预处理；Alt+Enter 两步提交（预处理 → 落库/查询）"></textarea>
+        <textarea id="input-md" class="editor" placeholder="输入内容。Enter 换行；点击“提交”进行一次性提交（若选择了 Agent，将先预处理）"></textarea>
         <div class="input-actions">
           <label class="btn">
             附件上传
@@ -97,7 +98,7 @@
           </label>
         </div>
         <div class="hint">
-          快捷键：Enter=换行；Shift+Enter=预处理到输出；Alt+Enter=两步提交（第一次预处理、第二次落库/查询）。
+          说明：点击“提交”一次性完成。若已选择 Agent，将先调用 Agent 进行预处理并将结果写入输出区，同时写入右侧会话列表；未选择 Agent 则直接写入。
         </div>
       </section>
     </main>

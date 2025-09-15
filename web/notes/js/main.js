@@ -43,15 +43,9 @@ function bindEditors() {
   document.getElementById('btn-output-copy').addEventListener('click', copyFeedAll);
 
   const inputEl = document.getElementById('input-md');
-  inputEl.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && e.shiftKey) {
-      e.preventDefault();
-      preprocessToOutput();
-    } else if (e.key === 'Enter' && e.altKey) {
-      e.preventDefault();
-      onAltEnter();
-    }
-  });
+  // 取消组合键提交，统一改为一次性“提交”按钮
+  const submitBtn = document.getElementById('btn-submit');
+  submitBtn?.addEventListener('click', oneShotSubmit);
 
   document.getElementById('file-upload').addEventListener('change', (e) => {
     const files = Array.from(e.target.files || []);
@@ -71,6 +65,39 @@ function preprocessToOutput() {
   // 第一次提交后清空输入框
   inputEl.value = '';
   console.log('[preprocess] via agent =', agent);
+}
+
+// 一次性提交逻辑：可选经 Agent 预处理 → 输出区 → 右侧会话列表
+async function oneShotSubmit() {
+  const inputEl = document.getElementById('input-md');
+  const raw = (inputEl?.value || '').trim();
+  if (!raw) { inputEl?.focus(); return; }
+  const topicId = getActiveTopicId();
+  const agentName = state.selectedAgent?.name || '(无Agent)';
+
+  let finalText = raw;
+  try {
+    const mod = state.selectedAgent?.module;
+    if (mod && typeof mod.preprocess === 'function') {
+      const context = { topicId, mode: state.activeMode, now: Date.now(), tags: Array.from(state.selectedTags||[]) };
+      const out = await mod.preprocess(raw, context);
+      if (typeof out === 'string' && out.trim()) finalText = out;
+    }
+  } catch (err) {
+    console.warn('[oneShotSubmit] 预处理失败，使用原文：', err);
+  }
+
+  // 写入输出区
+  appendFeedItem({ role: 'user', content: finalText, agent: agentName, topicId });
+
+  // 写入右侧会话列表
+  const sid = uid();
+  state.sessions.unshift({ id: sid, topicId, content: finalText, createdAt: Date.now(), favorited: false });
+  renderSessions();
+
+  // 清空输入并持久化
+  if (inputEl) inputEl.value = '';
+  persistUI();
 }
 
 function onAltEnter() {
